@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/bottom_sheet"
+    android:layout_width="match_parent"
+    android:layout_height="500dp"
+    android:background="@android:color/white"
+    android:orientation="vertical"
+    app:behavior_hideable="false"
+    app:behavior_peekHeight="300dp"
+    app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:id="@+id/topPanel"
+        android:visibility="visible">
+
+
+        <FrameLayout
+            android:layout_width="323dp"
+            android:layout_height="52dp"
+            android:translationY="120dp"
+            android:translationX="50dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.93">
+
+            <Button
+                android:id="@+id/buttonGoSheet"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:backgroundTint="@color/blue"
+                android:text="@string/buy"
+                android:textColor="@color/white"
+                android:textStyle="bold" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="330dp"
+            android:layout_height="100dp"
+            android:orientation="vertical"
+            android:translationX="70dp"
+            android:translationY="15dp">
+
+            <EditText
+                android:id="@+id/start_bottom"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp"
+                android:backgroundTint="@color/gray"
+                android:ems="10"
+                android:inputType="textPersonName"
+                android:minHeight="48dp"
+                android:hint="@string/start_country"
+                android:autofillHints=""
+                android:saveEnabled="false"
+                android:imeOptions="actionSend"/>
+
+            <EditText
+                android:id="@+id/finish_bottom"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:autofillHints=""
+                android:backgroundTint="@color/gray"
+                android:ems="10"
+                android:inputType="textPersonName"
+                android:minHeight="48dp"
+                android:hint="@string/end_country"
+                android:saveEnabled="false"
+                android:imeOptions="actionSend"/>
+        </LinearLayout>
+
+        <FrameLayout
+            android:layout_width="50dp"
+            android:layout_height="75dp"
+            android:translationY="25dp">
+
+            <ImageView
+                android:id="@+id/imageView7"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:srcCompat="@drawable/start_finish"
+                android:contentDescription="TODO" />
+
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_gravity="bottom"
+            android:layout_marginBottom="80dp">
+            <FrameLayout
+                android:layout_width="180dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="5dp">
+                <Button
+                    android:id="@+id/type_home_nal"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:backgroundTint="@color/lightBlue"
+                    android:text="@string/nalText"
+                    android:textSize="13sp"
+                    android:fontFamily="@font/roboto_mono_bold"/>
+            </FrameLayout>
+
+
+            <Button
+                android:id="@+id/type_home_offnal"
+                android:layout_width="200dp"
+                android:layout_height="40dp"
+                android:text="@string/offnalText"
+                android:textSize="13sp"
+                android:fontFamily="@font/roboto_mono_bold"
+                android:layout_marginStart="20dp"
+                android:backgroundTint="@color/lightBlue"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_gravity="bottom"
+            android:layout_marginBottom="20dp">
+
+            <FrameLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+                <ImageView
+                    android:id="@+id/imageView29"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:contentDescription="@string/todo"
+                    app:srcCompat="@drawable/dollar"
+                    android:layout_marginStart="10dp"/>
+
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/eco"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="5dp"
+                android:fontFamily="@font/roboto_mono_bold"
+                android:text="@string/eco"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                android:layout_marginTop="5dp" />
+
+            <FrameLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+                <ImageView
+                    android:id="@+id/imageView30"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:contentDescription="@string/todo"
+                    app:srcCompat="@drawable/dollar"
+                    android:layout_marginStart="50dp"/>
+
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/middle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/middle"
+                android:fontFamily="@font/roboto_mono_bold"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="5dp"/>
+
+            <FrameLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+                <ImageView
+                    android:id="@+id/imageView31"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:contentDescription="@string/todo"
+                    app:srcCompat="@drawable/dollar"
+                    android:layout_marginStart="30dp"/>
+
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/business"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/business"
+                android:fontFamily="@font/roboto_mono_bold"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="5dp"/>
+
+        </LinearLayout>
+
+    </FrameLayout>
+
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:id="@+id/bp">
+
+        <TextView
+            android:id="@+id/txt"
+            android:layout_width="150dp"
+            android:layout_height="30dp"
+            android:gravity="center"
+            android:text="@string/search_address"
+            android:textColorHint="@color/black"
+            android:textAlignment="center"
+            android:textColor="@android:color/black"
+            android:translationX="130dp"
+            android:fontFamily="@font/roboto_mono_bold"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:orientation="horizontal"
+            android:translationY="40dp">
+
+            <ImageView
+                android:id="@+id/imageView8"
+                android:layout_width="20dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                app:srcCompat="@drawable/home" />
+
+            <ImageView
+                android:id="@+id/imageView13"
+                android:layout_width="20dp"
+                android:layout_height="41dp"
+                android:layout_weight="1"
+                app:srcCompat="@drawable/work" />
+
+
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_gravity="bottom"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="40dp">
+
+
+                <ImageView
+                    android:id="@+id/homeButt"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    app:srcCompat="@drawable/home_image" />
+
+                <EditText
+                    android:id="@+id/home"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="10"
+                    android:layout_gravity="center"
+                    android:hint="@string/home"
+                    android:backgroundTint="@color/gray"
+                    android:inputType="textPersonName"
+                    android:saveEnabled="false"
+                    android:imeOptions="actionSend"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="40dp">
+
+
+                <ImageView
+                    android:id="@+id/workButt"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    app:srcCompat="@drawable/work_image" />
+
+                <EditText
+                    android:id="@+id/work"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="10"
+                    android:layout_gravity="center"
+                    android:hint="@string/work"
+                    android:backgroundTint="@color/gray"
+                    android:inputType="textPersonName"
+                    android:saveEnabled="false"
+                    android:imeOptions="actionSend"/>
+
+            </LinearLayout>
+
+
+        </LinearLayout>
+    </FrameLayout>
+
+
+</LinearLayout>

@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="320dp"
+    android:background="@color/sky_blue"
+    android:gravity="bottom"
+    android:orientation="vertical"
+    android:theme="@style/ThemeOverlay.AppCompat.Dark">
+
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:layout_marginTop="20dp"
+        android:background="@color/white">
+
+        <ImageView
+            android:id="@+id/imageView"
+            android:layout_width="78dp"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/nav_header_desc"
+            android:paddingTop="@dimen/nav_header_vertical_spacing"
+            app:srcCompat="@drawable/man" />
+
+
+        <TextView
+            android:id="@+id/nameSurnameNHD"
+            android:layout_width="wrap_content"
+            android:layout_height="25dp"
+            android:fontFamily="@font/roboto_mono_bold"
+            android:text="@string/nav_header_subtitle"
+            android:textColor="@color/black"
+            android:translationX="90dp"
+            android:translationY="30dp" />
+
+
+        <ImageView
+            android:id="@+id/imageView14"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:translationX="90dp"
+            android:translationY="60dp"
+            app:srcCompat="@drawable/star" />
+
+        <TextView
+            android:id="@+id/RateMenuDriver"
+            android:layout_width="30dp"
+            android:layout_height="20dp"
+            android:fontFamily="@font/roboto_mono_bold"
+            android:text="@string/rate"
+            android:textColor="@color/black"
+            android:translationX="120dp"
+            android:translationY="60dp">
+
+        </TextView>
+
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        android:orientation="horizontal"
+        android:layout_gravity="center_vertical"
+        android:layout_marginTop="100dp">
+
+
+        <LinearLayout
+            android:layout_width="60dp"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:layout_marginStart="10dp">
+
+            <ImageView
+                android:id="@+id/imageView32"
+                android:layout_width="60dp"
+                android:layout_height="50dp"
+                android:layout_marginEnd="20dp"
+                app:srcCompat="@drawable/count_orders_header" />
+
+            <TextView
+                android:layout_width="60dp"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/roboto_mono_bold"
+                android:gravity="center"
+                android:text="@string/count_orders"
+                android:textColor="@color/dark_gray"
+                android:textSize="16sp"
+                android:layout_marginEnd="20dp"/>
+
+            <TextView
+                android:id="@+id/count_orders_header_driver"
+                android:layout_width="60dp"
+                android:layout_height="50dp"
+                android:fontFamily="@font/roboto_mono_bold"
+                android:text="10"
+                android:textColor="@color/dark_gray"
+                android:gravity="center"
+                android:textSize="22sp" />
+
+
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="160dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="40dp"
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/imageView33"
+                android:layout_width="60dp"
+                android:layout_height="50dp"
+                android:layout_marginEnd="20dp"
+                app:srcCompat="@drawable/card"
+                android:layout_marginStart="40dp"/>
+
+            <TextView
+                android:layout_width="150dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="20dp"
+                android:fontFamily="@font/roboto_mono_bold"
+                android:gravity="center"
+                android:text="@string/incoming"
+                android:textColor="@color/dark_gray"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/income_day_header_driver"
+                android:layout_width="60dp"
+                android:layout_height="50dp"
+                android:fontFamily="@font/roboto_mono_bold"
+                android:gravity="center"
+                android:layout_marginStart="40dp"
+                android:text="10"
+                android:textColor="@color/dark_gray"
+                android:textSize="22sp" />
+
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+
+
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

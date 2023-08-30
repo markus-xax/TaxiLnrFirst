@@ -1,0 +1,52 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="#efefef"
+    android:orientation="vertical"
+    tools:context=".ChatActivity"
+    android:backgroundTint="@color/white">
+
+    <ImageButton
+        android:id="@+id/backChat"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:backgroundTint="@color/white"
+        android:rotation="180"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/circle" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/name_surname"
+        android:textColor="@color/black"
+        android:layout_gravity="center"
+        android:layout_marginTop="-10dp"
+        android:fontFamily="@font/roboto_mono_bold"
+        android:textSize="16sp"/>
+
+    <ListView
+        android:id="@+id/msgview"
+        android:layout_width="match_parent"
+        android:layout_height="640dp"
+        android:layout_weight="1"
+        android:background="@color/white"
+        android:divider="@null"
+        android:stackFromBottom="true"
+        android:transcriptMode="alwaysScroll">
+
+    </ListView>
+
+    <include
+        layout="@layout/type_message_area"
+        android:layout_width="match_parent"
+        android:layout_weight="1"
+        android:layout_height="20dp"
+        android:gravity="bottom" />
+</LinearLayout>
+
+
+
