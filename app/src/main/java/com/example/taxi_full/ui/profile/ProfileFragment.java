@@ -69,7 +69,7 @@ public class ProfileFragment extends Fragment {
             Gson parser = new Gson();
             try {
                 RootUserOne rootU = parser.fromJson(HttpApi.getId(url), RootUserOne.class);
-                getActivity().runOnUiThread(() -> {
+                requireActivity().runOnUiThread(() -> {
                     name_surname.setText(rootU.getName() + " " + rootU.getSurname());
                     name.setText(rootU.getName());
                     surname.setText(rootU.getSurname());

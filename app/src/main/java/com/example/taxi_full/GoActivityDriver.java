@@ -77,7 +77,7 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
     private final TCPSocket tcpSocket = new TCPSocket();
     private String hash;
     private DBClass dbClass = new DBClass();
-    public final String URL_API_USERS = "http://45.86.47.12/api/users";
+    private final String URL_API_USERS = "http://45.86.47.12/api/users";
     private final String URL_API_ORDERS_TREE = "http://45.86.47.12/api/ordersThree";
     private RootOrderOne r;
     private UserLocationLayer userLocationLayer;
@@ -159,7 +159,7 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
             DBClass = new DBClass();
             String hash = DBClass.getHash(this);
             String url = URL_API_USERS +"/"+hash;
-            String arg = "active=3";
+            String arg = "active=4";
             new Thread(()->{
                 if(HttpApi.put(url, arg) == HttpURLConnection.HTTP_OK) {
                     startActivity(new Intent("com.example.taxi_full.RequestDriver"));
@@ -474,7 +474,8 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
         String url_order = URL_API + "/" + db.getHash(this);
         Runnable geoListener = () -> {
             try {
-                if(HttpApi.getId(url_order).equals("3")) {
+                RootOrderOne rootOrderOne = new Gson().fromJson(HttpApi.getId(url_order), RootOrderOne.class);
+                if(rootOrderOne.getActive().equals("0") || rootOrderOne.getActive().equals("4")) {
                     startActivity(new Intent("com.example.taxi_full.RequestDriver"));
                     executor.shutdown();
                 }

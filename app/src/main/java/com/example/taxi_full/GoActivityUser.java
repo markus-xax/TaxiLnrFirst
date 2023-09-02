@@ -82,7 +82,7 @@ public class GoActivityUser extends AppCompatActivity implements UserLocationObj
     private String hash;
     private final DBClass dbClass = new DBClass();
     private final String URL_API_ORDERS_TREE = "http://45.86.47.12/api/ordersThree";
-    public final String URL_API_USERS = "http://45.86.47.12/api/users";
+    private final String URL_API_USERS = "http://45.86.47.12/api/users";
     private RootOrderOne r;
     private UserLocationLayer userLocationLayer;
     private MapView mapView;
@@ -102,6 +102,7 @@ public class GoActivityUser extends AppCompatActivity implements UserLocationObj
     private TextView time, time2, price;
     private final String URL_CARS = "http://45.86.47.12/api/cars";
     private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+    private DBClass DBClass = new DBClass();
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -115,6 +116,7 @@ public class GoActivityUser extends AppCompatActivity implements UserLocationObj
 
         connectToSocket();
         connectToSocketNotifications();
+        cancel();
 
         mapView = findViewById(R.id.mapviewUserGo);
         mapView.getMap().setRotateGesturesEnabled(true);
@@ -175,11 +177,19 @@ public class GoActivityUser extends AppCompatActivity implements UserLocationObj
             }
         }).start();
 
+        submitRequest();
+
+        RedirectToHome();
+
+    }
+
+    private void cancel(){
         Button cancel = findViewById(R.id.cancel);
         cancel.setOnClickListener(view -> {
-            String hash = dbClass.getHash(this);
+            DBClass = new DBClass();
+            String hash = DBClass.getHash(this);
             String url = URL_API_USERS +"/"+hash;
-            String arg = "active=3";
+            String arg = "active=4";
             new Thread(()->{
                 if(HttpApi.put(url, arg) == HttpURLConnection.HTTP_OK) {
                     try {
@@ -196,11 +206,6 @@ public class GoActivityUser extends AppCompatActivity implements UserLocationObj
                 }
             }).start();
         });
-
-        submitRequest();
-
-        RedirectToHome();
-
     }
 
     @Override
@@ -498,7 +503,7 @@ public class GoActivityUser extends AppCompatActivity implements UserLocationObj
         Runnable geoListener = () -> {
             try {
                 RootOrderOne rootOrderOne = new Gson().fromJson(HttpApi.getId(url_order), RootOrderOne.class);
-                if(rootOrderOne.getActive().equals("3") || rootOrderOne.getActive().equals("4")) {
+                if(rootOrderOne.getActive().equals("0") || rootOrderOne.getActive().equals("4")) {
                     if(rootOrderOne.getType_pay().equals("2")){
                         startActivity(new Intent("com.example.taxi_full.PayOffNal"));
                         executor.shutdown();

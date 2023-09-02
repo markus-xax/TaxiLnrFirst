@@ -81,14 +81,14 @@ public class WalletFragment extends Fragment {
                     int allIncInt = (int) finalAllInc;
                     int nnIncInt = (int) finalNnInc;
                     if (nnIncInt == 0)
-                        getActivity().runOnUiThread(() -> reject.setVisibility(View.GONE));
-                    getActivity().runOnUiThread(() -> {
+                        requireActivity().runOnUiThread(() -> reject.setVisibility(View.GONE));
+                    requireActivity().runOnUiThread(() -> {
                         list.setAdapter(new AdaptorWallet(root.getContext(), c, data));
                         allIncComingDriver.setText(allIncInt + "p");
                         notNalIncomingDriver.setText(nnIncInt + "р");
                     });
                 } else
-                    getActivity().runOnUiThread(() -> reject.setVisibility(View.GONE));
+                    requireActivity().runOnUiThread(() -> reject.setVisibility(View.GONE));
             } catch (IOException e) {
                 e.printStackTrace();
             }

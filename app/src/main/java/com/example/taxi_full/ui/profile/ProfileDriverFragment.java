@@ -47,7 +47,7 @@ public class ProfileDriverFragment extends Fragment {
             String hash = dbClass.getHash(root.getContext());
             String url = URL_API_USERS +"/"+hash+"/"+dbClass.getDC(root.getContext());
             try {
-                getActivity().runOnUiThread(()->{
+                requireActivity().runOnUiThread(()->{
                     imageButton.setBackgroundColor(Color.WHITE);
                     imageButton.setImageResource(R.drawable.car_driver_profile);
                 });
@@ -55,7 +55,7 @@ public class ProfileDriverFragment extends Fragment {
                     rootCars = new Gson().fromJson(HttpApi.getId(URL_CARS + "/" + hash), RootCars.class);
                 }
                     RootUserOne rootUserOne = new Gson().fromJson(HttpApi.getId(url), RootUserOne.class);
-                    getActivity().runOnUiThread(() -> {
+                requireActivity().runOnUiThread(() -> {
                         if (rootUserOne.getError().equals(""))
                             name_surname.setText(rootUserOne.getNameSurname());
                         if (rootUserOne.getRate() == null || rootUserOne.getRate().equals(""))
@@ -65,7 +65,7 @@ public class ProfileDriverFragment extends Fragment {
                         try {
                             if (!HttpApi.getId(URL_CARS + "/" + hash).equals("0")) {
                                 if (rootCars.getError() == null) {
-                                    getActivity().runOnUiThread(()->{
+                                    requireActivity().runOnUiThread(()->{
                                         model.setText(rootCars.getModel());
                                         number.setText(rootCars.getNumber());
                                         imageButton.setEnabled(false);

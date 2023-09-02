@@ -781,7 +781,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         Runnable geoListener = () -> {
             try {
                 RootOrderOne r = new Gson().fromJson(HttpApi.getId(url_order), RootOrderOne.class);
-                if (r.getActive().equals("3") || r.getActive().equals("4")) {
+                if (r.getActive().equals("3") || r.getActive().equals("4") || r.getActive().equals("5")) {
                     startActivity(new Intent("com.example.taxi_full.GoUser"));
                     executor.shutdown();
                 }
@@ -800,7 +800,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         new Thread(() -> {
             RootOrderOne r = null;
             try {if(!HttpApi.getId(url_order).equals("0")) {r = new Gson().fromJson(HttpApi.getId(url_order), RootOrderOne.class);}} catch (Exception e) {e.printStackTrace();}
-            if (r != null && (r.getActive().equals("3") || r.getActive().equals("4"))) {
+            if (r != null && (r.getActive().equals("3") || r.getActive().equals("4") || r.getActive().equals("5"))) {
                 try {TimeUnit.SECONDS.sleep(2);} catch (InterruptedException e) {e.printStackTrace();}
                 startActivity(new Intent("com.example.taxi_full.GoUser"));
             }

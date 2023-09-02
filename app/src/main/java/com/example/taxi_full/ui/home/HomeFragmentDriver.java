@@ -2,6 +2,7 @@ package com.example.taxi_full.ui.home;
 
 import static android.content.Context.SENSOR_SERVICE;
 
+import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
@@ -28,6 +29,7 @@ import com.example.taxi_full.API.MyLocationListener;
 import com.example.taxi_full.API.model.RootAllOrders;
 import com.example.taxi_full.API.model.RootCars;
 import com.example.taxi_full.API.model.RootOrderOne;
+import com.example.taxi_full.API.model.geocode.RootGeolocation;
 import com.example.taxi_full.R;
 import com.example.taxi_full.databinding.FragmantHomeDriverBinding;
 import com.google.gson.Gson;
@@ -46,6 +48,7 @@ import java.nio.channels.NotYetConnectedException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -58,6 +61,7 @@ public class HomeFragmentDriver extends Fragment {
     public int[] dataImg;
     public final String URL_API = "http://45.86.47.12/api/orders";
     public final String URL_API_CAR = "http://45.86.47.12/api/cars/";
+    private static final String GEOCODER_API_KEY = "94c7a826-02a9-4847-b560-1699c2b7d751";
     public DBClass DBClass = new DBClass();
     private WebSocketClient mWebSocketClient;
     private WebSocketClient mWebSocketClientGeo;
@@ -70,6 +74,8 @@ public class HomeFragmentDriver extends Fragment {
     private final double mOffset = 0.1;
     Sensor defaultGyroscope;
     private float gyroscope = 0f;
+    private String[][] newData;
+    private int[] newImg;
 
 
 
@@ -90,7 +96,9 @@ public class HomeFragmentDriver extends Fragment {
         countOrders = root.findViewById(R.id.count);
 
 
-        new Thread(() -> {
+        Runnable ord = () -> {
+            countOrders = root.findViewById(R.id.count);
+            list = root.findViewById(R.id.listView);
             try {
                 if(!HttpApi.getId(url).equals("0")) {
                     if (!HttpApi.getId(URL_API_CAR + hash).equals("0")) {
@@ -104,31 +112,45 @@ public class HomeFragmentDriver extends Fragment {
                                 count++;
                         }
                         String orC = "У вас " + count + " новых запросов";
-                        getActivity().runOnUiThread(() -> countOrders.setText(orC));
+                        requireActivity().runOnUiThread(() -> countOrders.setText(orC));
                         data = new String[count][6];
                         dataImg = new int[count];
                         for (int i = 0; i < count; i++) {
                             if (orders.get(i).getClassOrder().equals(rootCars.getClassCar())) {
-                                data[i][0] = orders.get(i).getNameUser();
-                                data[i][1] = orders.get(i).getDistance();
-                                data[i][2] = orders.get(i).getPrice();
-                                data[i][3] = orders.get(i).getStart_string();
-                                data[i][4] = orders.get(i).getFinish_string();
-                                data[i][5] = orders.get(i).getType_pay();
-                                dataImg[i] = R.drawable.profile_man;
+                                arrayInp(i, orders);
                             }
+                        }
+                        newData = cityOrders(data, orders);
+                        newImg = dataImgOrders(data, orders);
+                        if(ordersIsCity(data)) {
+                            String orCN = "У вас " + newImg.length + " новых запросов";
+                            requireActivity().runOnUiThread(() -> countOrders.setText(orCN));
                         }
                     }
                 }
-                getActivity().runOnUiThread(() -> list.setAdapter(new AdaptorOrders(root.getContext(), data, dataImg)));
+                if(ordersIsCity(data)) {
+                    while (true) {
+                        if (newData != null && newImg != null) {
+                            requireActivity().runOnUiThread(() -> list.setAdapter(new AdaptorOrders(root.getContext(), newData, newImg)));
+                            break;
+                        }
+                    }
+                } else
+                    requireActivity().runOnUiThread(() -> list.setAdapter(new AdaptorOrders(root.getContext(), data, dataImg)));
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }).start();
-
+        };
+        Thread thread = new Thread(ord);
+        thread.start();
         try {
-            if (ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION)!= PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(getActivity(), new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 101);
+            thread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        try {
+            if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION)!= PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 101);
             }
         } catch (Exception e){
             e.printStackTrace();
@@ -352,7 +374,7 @@ public class HomeFragmentDriver extends Fragment {
                     String orC = "У вас " + count + " новых запросов";
                     data = new String[count][6];
                     dataImg = new int[count];
-                    getActivity().runOnUiThread(() -> countOrders.setText(orC));
+                    requireActivity().runOnUiThread(() -> countOrders.setText(orC));
                     for (int i = 0; i < count; i++) {
                         if (orders.get(i).getClassOrder().equals(rootCars.getClassCar())) {
                             data[i][0] = orders.get(i).getNameUser();
@@ -411,4 +433,80 @@ public class HomeFragmentDriver extends Fragment {
         super.onPause();
         mSensorManager.unregisterListener(gyroscopeSensorListener);
     }
+    private void arrayInp(int i, List<RootAllOrders> orders){
+        data[i][0] = orders.get(i).getNameUser();
+        data[i][1] = orders.get(i).getDistance();
+        data[i][2] = orders.get(i).getPrice();
+        data[i][3] = orders.get(i).getStart_string();
+        data[i][4] = orders.get(i).getFinish_string();
+        data[i][5] = orders.get(i).getType_pay();
+        dataImg[i] = R.drawable.profile_man;
+    }
+    private String myGeo() throws IOException {
+        double lat = MyLocationListener.imHere.getLatitude();  // широта
+        double lon = MyLocationListener.imHere.getLongitude(); // долгота
+        RootGeolocation rootGeoStart = new Gson().fromJson(HttpApi.getId("https://geocode-maps.yandex.ru/1.x/?geocode=" + lon + "," + lat + "&apikey=" + GEOCODER_API_KEY + "&format=json&results=1&kind=house"), RootGeolocation.class);
+        String MyStringUK = rootGeoStart.getResponse().getGeoObjectCollection().getFeatureMember().get(0).getGeoObject().getDescription();
+        String MyStr = MyStringUK.replace("Украина","");
+        String[] f = MyStr.split(",");
+        return f[0];
+    }
+    private boolean ordersIsCity(String[][] data) throws IOException {
+        if(data != null) {
+            for (int i = 0; i < data.length; i++) {
+                String[] city = data[i][3].split(",");
+                if (city[0].equals(myGeo())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private String[][] cityOrders(String[][] data, List<RootAllOrders> orders) throws IOException {
+        String[][] newData = new String[lengthDataCity()][6];
+        if(data != null) {
+            int c = 0;
+            for (int i = 0; i < data.length; i++) {
+                String[] city = data[i][3].split(",");
+                if (city[0].equals(myGeo())) {
+                    newData[c][0] = orders.get(c).getNameUser();
+                    newData[c][1] = orders.get(c).getDistance();
+                    newData[c][2] = orders.get(c).getPrice();
+                    newData[c][3] = orders.get(c).getStart_string();
+                    newData[c][4] = orders.get(c).getFinish_string();
+                    newData[c][5] = orders.get(c).getType_pay();
+                }
+            }
+        }
+        return newData;
+    }
+
+    private int lengthDataCity() throws IOException {
+        int count = 0;
+        if(data != null) {
+            for (int i = 0; i < data.length; i++) {
+                String[] city = data[i][3].split(",");
+                if (city[0].equals(myGeo())) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    private int[] dataImgOrders(String[][] data, List<RootAllOrders> orders) throws IOException {
+        int[] newData = new int[lengthDataCity()];
+        if(data != null) {
+            int c = 0;
+            for (int i = 0; i < data.length; i++) {
+                String[] city = data[i][3].split(",");
+                if (city[0].equals(myGeo())) {
+                    newData[c] = R.drawable.profile_man;
+                }
+            }
+        }
+        return newData;
+    }
+
 }

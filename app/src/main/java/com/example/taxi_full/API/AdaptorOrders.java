@@ -65,72 +65,73 @@ public class AdaptorOrders extends BaseAdapter {
         TextView addressFinish = v.findViewById(R.id.addressFinish);
         ImageView profile = v.findViewById(R.id.profile_pictire);
         Button type_pay = v.findViewById(R.id.type_pay_driver_home);
-        nameSurname.setText(data[i][0]);
-        distance.setText(data[i][1]);
-        price.setText(data[i][2]);
-        addressStart.setText(data[i][3]);
-        addressFinish.setText(data[i][4]);
-        if(data[i][5].equals("1"))
-            type_pay.setText("Наличный расчет");
-        else
-            type_pay.setText("Безналичный расчет");
-        profile.setImageResource(dataImg[i]);
+        if(dataImg != null) {
+            nameSurname.setText(data[i][0]);
+            distance.setText(data[i][1]);
+            price.setText(data[i][2]);
+            addressStart.setText(data[i][3]);
+            addressFinish.setText(data[i][4]);
+            if (data[i][5].equals("1"))
+                type_pay.setText("Наличный расчет");
+            else
+                type_pay.setText("Безналичный расчет");
+            profile.setImageResource(dataImg[i]);
 
-        Button Button1= v.findViewById(R.id.button5);
-        Button1.setTag(i);
-        new Thread(() -> {
-            DBClass dbClass = new DBClass();
-            String hash = dbClass.getHash(v.getContext());
-            try {
-                if (!HttpApi.getId(URL_CARS + "/" + hash).equals("0")) {
-                    Button1.setOnClickListener(view1 -> {
-                        //отправка имени и фамилии заказчика при принятии заказа, отправка хэша водителя
-                        int position = (Integer) view1.getTag();
-                        DBClass db = new DBClass();
-                        nameOrder.put("NameSurnameOrder", data[position][0]);
-                        nameOrder.put("HashDriver", db.getHash(context));
-                        JSONObject jsonGeometry = new JSONObject(nameOrder);
-                        mWebSocketClient.send(String.valueOf(jsonGeometry));
-                        mWebSocketClient.close();
-                        DBClass dBClass = new DBClass();
-                        String hashU = null;
-                        try {
-                            hashU = HttpApi.getId(URL_API_ONE + "/" + nameOrder.get("NameSurnameOrder"));
-                        } catch (IOException e) {
-                            Log.d("IOE-ex", e.getMessage());
-                        }
-                        if (hashU != null) {
-                            String urlUser = URL_API_USER + "/" + dbClass.getHash(v.getContext()) + "/" + dbClass.getDC(v.getContext());
-                            RootUserOne rootUserOne = null;
+            Button Button1 = v.findViewById(R.id.button5);
+            Button1.setTag(i);
+            new Thread(() -> {
+                DBClass dbClass = new DBClass();
+                String hash = dbClass.getHash(v.getContext());
+                try {
+                    if (!HttpApi.getId(URL_CARS + "/" + hash).equals("0")) {
+                        Button1.setOnClickListener(view1 -> {
+                            //отправка имени и фамилии заказчика при принятии заказа, отправка хэша водителя
+                            int position = (Integer) view1.getTag();
+                            DBClass db = new DBClass();
+                            nameOrder.put("NameSurnameOrder", data[position][0]);
+                            nameOrder.put("HashDriver", db.getHash(context));
+                            JSONObject jsonGeometry = new JSONObject(nameOrder);
+                            mWebSocketClient.send(String.valueOf(jsonGeometry));
+                            mWebSocketClient.close();
+                            DBClass dBClass = new DBClass();
+                            String hashU = null;
                             try {
-                                rootUserOne = new Gson().fromJson(HttpApi.getId(urlUser), RootUserOne.class);
+                                hashU = HttpApi.getId(URL_API_ONE + "/" + nameOrder.get("NameSurnameOrder"));
                             } catch (IOException e) {
-                                e.printStackTrace();
+                                Log.d("IOE-ex", e.getMessage());
                             }
-                            RootOrderOne r = new Gson().fromJson(hashU, RootOrderOne.class);
-                            String url = URL_API_ONE + "/" + r.getHash_user();
-                            String arg = "hashD=" + hash + "&nameD=" + rootUserOne.getNameSurname();
-                            if (HttpApi.put(url, arg) == HttpURLConnection.HTTP_OK) {
-                                // 1 - нал, 2 безнал для кошелка
-                                HttpApi.post(URL_WALLET, "hash="+hash+"&active="+active+"&methood="+r.getType_pay());
-                                if(active == 1)
-                                    HttpApi.post(URL_DEBT, "hash="+hash);
+                            if (hashU != null) {
+                                String urlUser = URL_API_USER + "/" + dbClass.getHash(v.getContext()) + "/" + dbClass.getDC(v.getContext());
+                                RootUserOne rootUserOne = null;
                                 try {
-                                    context.startActivity(new Intent("com.example.taxi_full.GoDriver"));
-                                } catch (Exception e) {
+                                    rootUserOne = new Gson().fromJson(HttpApi.getId(urlUser), RootUserOne.class);
+                                } catch (IOException e) {
                                     e.printStackTrace();
                                 }
-                            } else
-                                Log.d("err", hashU);
-                        }
+                                RootOrderOne r = new Gson().fromJson(hashU, RootOrderOne.class);
+                                String url = URL_API_ONE + "/" + r.getHash_user();
+                                String arg = "hashD=" + hash + "&nameD=" + rootUserOne.getNameSurname();
+                                if (HttpApi.put(url, arg) == HttpURLConnection.HTTP_OK) {
+                                    // 1 - нал, 2 безнал для кошелка
+                                    HttpApi.post(URL_WALLET, "hash=" + hash + "&active=" + active + "&methood=" + r.getType_pay());
+                                    if (active == 2)
+                                        HttpApi.post(URL_DEBT, "hash=" + hash);
+                                    try {
+                                        context.startActivity(new Intent("com.example.taxi_full.GoDriver"));
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    }
+                                } else
+                                    Log.d("err", hashU);
+                            }
 
-                    });
+                        });
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }).start();
-
+            }).start();
+        }
 
         return v;
     }

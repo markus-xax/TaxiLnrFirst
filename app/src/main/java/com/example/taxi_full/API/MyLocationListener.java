@@ -26,8 +26,8 @@ public class MyLocationListener implements LocationListener {
         }
         locationManager.requestLocationUpdates(
                 LocationManager.NETWORK_PROVIDER,
-                5000,
-                10,
+                500,
+                5,
                 locationListener); // здесь можно указать другие более подходящие вам параметры
 
         imHere = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);

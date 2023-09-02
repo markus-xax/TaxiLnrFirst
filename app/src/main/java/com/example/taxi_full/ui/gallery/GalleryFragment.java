@@ -61,7 +61,7 @@ public class GalleryFragment extends Fragment {
                     data[i][2] = orders.get(i).getStart_string();
                     data[i][3] = orders.get(i).getFinish_string();
                 }
-                getActivity().runOnUiThread(() -> list.setAdapter(new AdaptorHistory(root.getContext(), orders.size(), data)));
+                requireActivity().runOnUiThread(() -> list.setAdapter(new AdaptorHistory(root.getContext(), orders.size(), data)));
             }catch (Exception e){
                 e.printStackTrace();
             }
