@@ -1,11 +1,16 @@
 package com.example.taxi_full;
 
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.PointF;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -61,7 +66,6 @@ import java.util.Locale;
 public class HomeActivityDriver extends AppCompatActivity implements UserLocationObjectListener {
     //комит перед ростовом
     private static final int PERMISSIONS_REQUEST_FINE_LOCATION = 1;
-
     private AppBarConfiguration mAppBarConfiguration;
     private ActivityHomeDriverBinding binding;
     private final String URL_API_USER = "http://45.86.47.12/api/user";
@@ -82,6 +86,8 @@ public class HomeActivityDriver extends AppCompatActivity implements UserLocatio
     private int incomingDriver;
     private final String URL_DEBT = "http://45.86.47.12/api/debt";
     private int debtInd = 0;
+    Dialog dialog;
+    final int DIALOG = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -131,8 +137,20 @@ public class HomeActivityDriver extends AppCompatActivity implements UserLocatio
         } catch (Exception e){
             e.printStackTrace();
         }
-        if (debtInd == 0)
+        if (debtInd == 0) {
             redirectDebt();
+
+        }
+        new Thread(()->{
+            DBClass db = new DBClass();
+            try {
+                if (HttpApi.getId(URL_CARS + db.getHash(this)).equals("0")) {
+                        runOnUiThread(()-> showDialog(DIALOG));
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }).start();
     }
 
     private void requestLocationPermission() {
@@ -373,4 +391,32 @@ public class HomeActivityDriver extends AppCompatActivity implements UserLocatio
         }).start();
     }
 
+    @Override
+    protected Dialog onCreateDialog(int id) {
+        if (id == DIALOG) {
+            AlertDialog.Builder adb = new AlertDialog.Builder(this);
+            adb.setTitle("Добавьте автомобиль");
+            adb.setMessage("Для этого перейдите в раздел \"профиль\" ->" +
+                    " \"нажать на изображение автомобиля\"");
+            adb.setPositiveButton("OK", null);
+            dialog = adb.create();
+            dialog.setOnShowListener(dialogInterface -> {
+                Button positiveButton = ((AlertDialog)dialog).getButton(DialogInterface.BUTTON_POSITIVE);
+                positiveButton.setTextColor(getApplicationContext().getResources().getColor(R.color.dark_gray));
+                positiveButton.setTypeface(Typeface.DEFAULT_BOLD);
+                positiveButton.invalidate();
+            });
+
+            // обработчик отмены
+            dialog.setOnCancelListener(dialog -> {
+            });
+
+            // обработчик закрытия
+            dialog.setOnDismissListener(dialog -> {
+            });
+
+            return dialog;
+        }
+        return super.onCreateDialog(id);
+    }
 }

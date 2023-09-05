@@ -218,11 +218,6 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
             business.setBackgroundColor(Color.GRAY);
         });
 
-        PlacemarkMapObject m = mapObjects.addPlacemark(new Point(24, 24), ImageProvider.fromResource(HomeActivity.this, R.drawable.car_driver));
-        m.setDirection(180f);
-        m.setIconStyle(new IconStyle().setAnchor(new PointF(0f, 0f)).setRotationType(RotationType.ROTATE).setZIndex(0f).setScale(1f));
-
-
         StartPointGeolocation();
         dragPoints();
         go();
@@ -680,40 +675,41 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                                 if (!DBClass.getHash(HomeActivity.this).equals(posts.get(i).getHash())) {
                                     if (DC.get(posts.get(i).getHash()) == null) {
                                         if (colorsCars.get(posts.get(i).getHash()) != null) {
+                                            Point cars = new Point(Double.parseDouble(String.valueOf(users.get(posts.get(i).getHash()).get("Latitude"))), Double.parseDouble(String.valueOf(users.get(posts.get(i).getHash()).get("Longitude"))));
                                             switch (colorsCars.get(posts.get(i).getHash())) {
                                                 case 1:
-                                                    PlacemarkMapObject m = mapObjects.addPlacemark(new Point(Double.parseDouble(String.valueOf(users.get(posts.get(i).getHash()).get("Latitude"))), Double.parseDouble(String.valueOf(users.get(posts.get(i).getHash()).get("Longitude")))), ImageProvider.fromResource(HomeActivity.this, R.drawable.car_white_small));
-                                                    m.setIconStyle(new IconStyle().setAnchor(new PointF(0f, 0f)).setRotationType(RotationType.ROTATE).setZIndex(0f).setScale(1f));
+                                                    PlacemarkMapObject m = mapObjects.addPlacemark(cars, ImageProvider.fromResource(HomeActivity.this, R.drawable.car_white_small));
+                                                    m.setIconStyle(new IconStyle().setRotationType(RotationType.ROTATE));
                                                     m.setDirection(Float.parseFloat(users.get(posts.get(i).getHash()).get("Duration").toString()));
                                                     DC.put(posts.get(i).getHash(), m);
                                                     break;
                                                 case 2:
-                                                    PlacemarkMapObject mB = mapObjects.addPlacemark(new Point(Double.parseDouble(String.valueOf(users.get(posts.get(i).getHash()).get("Latitude"))), Double.parseDouble(String.valueOf(users.get(posts.get(i).getHash()).get("Longitude")))), ImageProvider.fromResource(HomeActivity.this, R.drawable.car_black_small));
-                                                    mB.setIconStyle(new IconStyle().setAnchor(new PointF(0f, 0f)).setRotationType(RotationType.ROTATE).setZIndex(0f).setScale(1f));
+                                                    PlacemarkMapObject mB = mapObjects.addPlacemark(cars, ImageProvider.fromResource(HomeActivity.this, R.drawable.car_black_small));
+                                                    mB.setIconStyle(new IconStyle().setRotationType(RotationType.ROTATE));
                                                     mB.setDirection(Float.parseFloat(users.get(posts.get(i).getHash()).get("Duration").toString()));
                                                     DC.put(posts.get(i).getHash(), mB);
                                                     break;
                                                 case 3:
-                                                    PlacemarkMapObject mBl = mapObjects.addPlacemark(new Point(Double.parseDouble(String.valueOf(users.get(posts.get(i).getHash()).get("Latitude"))), Double.parseDouble(String.valueOf(users.get(posts.get(i).getHash()).get("Longitude")))), ImageProvider.fromResource(HomeActivity.this, R.drawable.car_blue_small));
-                                                    mBl.setIconStyle(new IconStyle().setAnchor(new PointF(0f, 0f)).setRotationType(RotationType.ROTATE).setZIndex(0f).setScale(1f));
+                                                    PlacemarkMapObject mBl = mapObjects.addPlacemark(cars, ImageProvider.fromResource(HomeActivity.this, R.drawable.car_blue_small));
+                                                    mBl.setIconStyle(new IconStyle().setRotationType(RotationType.ROTATE));
                                                     mBl.setDirection(Float.parseFloat(users.get(posts.get(i).getHash()).get("Duration").toString()));
                                                     DC.put(posts.get(i).getHash(), mBl);
                                                     break;
                                                 case 4:
-                                                    PlacemarkMapObject mBG = mapObjects.addPlacemark(new Point(Double.parseDouble(String.valueOf(users.get(posts.get(i).getHash()).get("Latitude"))), Double.parseDouble(String.valueOf(users.get(posts.get(i).getHash()).get("Longitude")))), ImageProvider.fromResource(HomeActivity.this, R.drawable.car_green_small));
-                                                    mBG.setIconStyle(new IconStyle().setAnchor(new PointF(0f, 0f)).setRotationType(RotationType.ROTATE).setZIndex(0f).setScale(1f));
+                                                    PlacemarkMapObject mBG = mapObjects.addPlacemark(cars, ImageProvider.fromResource(HomeActivity.this, R.drawable.car_green_small));
+                                                    mBG.setIconStyle(new IconStyle().setRotationType(RotationType.ROTATE));
                                                     mBG.setDirection(Float.parseFloat(users.get(posts.get(i).getHash()).get("Duration").toString()));
                                                     DC.put(posts.get(i).getHash(), mBG);
                                                     break;
                                                 case 5:
-                                                    PlacemarkMapObject mR = mapObjects.addPlacemark(new Point(Double.parseDouble(String.valueOf(users.get(posts.get(i).getHash()).get("Latitude"))), Double.parseDouble(String.valueOf(users.get(posts.get(i).getHash()).get("Longitude")))), ImageProvider.fromResource(HomeActivity.this, R.drawable.car_red_small));
-                                                    mR.setIconStyle(new IconStyle().setAnchor(new PointF(0f, 0f)).setRotationType(RotationType.ROTATE).setZIndex(0f).setScale(1f));
+                                                    PlacemarkMapObject mR = mapObjects.addPlacemark(cars, ImageProvider.fromResource(HomeActivity.this, R.drawable.car_red_small));
+                                                    mR.setIconStyle(new IconStyle().setRotationType(RotationType.ROTATE));
                                                     mR.setDirection(Float.parseFloat(users.get(posts.get(i).getHash()).get("Duration").toString()));
                                                     DC.put(posts.get(i).getHash(), mR);
                                                     break;
                                                 case 6:
-                                                    PlacemarkMapObject mY = mapObjects.addPlacemark(new Point(Double.parseDouble(String.valueOf(users.get(posts.get(i).getHash()).get("Latitude"))), Double.parseDouble(String.valueOf(users.get(posts.get(i).getHash()).get("Longitude")))), ImageProvider.fromResource(HomeActivity.this, R.drawable.car_yellow_small));
-                                                    mY.setIconStyle(new IconStyle().setAnchor(new PointF(0f, 0f)).setRotationType(RotationType.ROTATE).setZIndex(0f).setScale(1f));
+                                                    PlacemarkMapObject mY = mapObjects.addPlacemark(cars, ImageProvider.fromResource(HomeActivity.this, R.drawable.car_yellow_small));
+                                                    mY.setIconStyle(new IconStyle().setRotationType(RotationType.ROTATE));
                                                     mY.setDirection(Float.parseFloat(users.get(posts.get(i).getHash()).get("Duration").toString()));
                                                     DC.put(posts.get(i).getHash(), mY);
                                                     break;
@@ -1059,8 +1055,6 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         });
     }
 
-
-
     private void dragPoints(){
         new Thread(() -> {
             DBClass db = new DBClass();
@@ -1377,7 +1371,5 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
             }
         }).start());
     }
-
-
 }
 
