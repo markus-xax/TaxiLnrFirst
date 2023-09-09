@@ -3,6 +3,7 @@ package com.example.taxi_full;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.LocationManager;
@@ -15,6 +16,8 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.example.taxi_full.API.HashGenerator;
 
@@ -23,12 +26,15 @@ public class Driver_ClientActivity extends AppCompatActivity {
     DBHelper dbHelper;
     LocationManager locationManager;
     private boolean GPS_STATUS;
+    private static final int REQUEST_CODE_PERMISSION_INTERNET = 1;
+    private static final int PERMISSIONS_REQUEST_FINE_LOCATION = 1;
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.driver_byer);
+        requestLocationPermission();
 
         dbHelper = new DBHelper(this);
 
@@ -128,6 +134,17 @@ public class Driver_ClientActivity extends AppCompatActivity {
     public void GPSStatus() {
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         GPS_STATUS = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+    }
+    private void requestLocationPermission() {
+        if (ContextCompat.checkSelfPermission(this, "android.permission.ACCESS_FINE_LOCATION") != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{"android.permission.ACCESS_FINE_LOCATION"}, PERMISSIONS_REQUEST_FINE_LOCATION);
+        }
+    }
+
+    private void permissionInternet() {
+        if (ContextCompat.checkSelfPermission(this, "android.permission.INTERNET") != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{"android.permission.INTERNET"}, REQUEST_CODE_PERMISSION_INTERNET);
+        }
     }
 
 }
