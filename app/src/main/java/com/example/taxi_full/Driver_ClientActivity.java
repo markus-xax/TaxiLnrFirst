@@ -62,13 +62,9 @@ public class Driver_ClientActivity extends AppCompatActivity {
 
         if(GPS_STATUS == true)
         {
-            runOnUiThread(()->{
-                Toast.makeText(this, "Геолокация включена", Toast.LENGTH_LONG);
-            });
+            runOnUiThread(()-> Toast.makeText(this, "Геолокация включена", Toast.LENGTH_LONG));
         } else {
-            runOnUiThread(()->{
-                Toast.makeText(this, "Геолокация включена", Toast.LENGTH_LONG);
-            });
+            runOnUiThread(()-> Toast.makeText(this, "Геолокация включена", Toast.LENGTH_LONG));
             Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
             startActivity(intent);
         }

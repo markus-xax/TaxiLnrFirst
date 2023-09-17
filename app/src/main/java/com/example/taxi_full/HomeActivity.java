@@ -634,7 +634,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
             public void onOpen(ServerHandshake serverHandshake) {
                 Log.d("WebsocketGeoHome", "Opened");
             }
-
+            private boolean flag = false;
             @Override
             public void onMessage(String s) {
                 try {
@@ -662,13 +662,16 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                             }
                         }
                     };
-                    Thread thread = new Thread(getCars);
-                    thread.start();
-                    thread.join();
-                } catch (Exception e){
+                    if (!s.equals("[[]]")) {
+                        flag = true;
+                        Thread thread = new Thread(getCars);
+                        thread.start();
+                        thread.join();
+                    }
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
-
+                if (flag) {
                     runOnUiThread(() -> {
                         for (int i = 0; i < posts.size(); i++) {
                             if (colorsCars != null) {
@@ -723,6 +726,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                             }
                         }
                     });
+                }
             }
 
             @Override

@@ -26,8 +26,8 @@ import java.io.IOException;
 
 public class LoginActivity extends AppCompatActivity {
 
-    private String reg = "Регистрация";
-    private String auth = "Продолжить";
+    private final String reg = "Регистрация";
+    private final String auth = "Продолжить";
     private String URL_API = "http://45.86.47.12/api/users/";
     private String URL_API_USER = "http://45.86.47.12/api/user/";
     private DBHelper dbHelper;

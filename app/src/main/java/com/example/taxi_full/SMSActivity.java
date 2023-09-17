@@ -24,7 +24,7 @@ public class SMSActivity extends AppCompatActivity {
         String DC = dbClass.getDC(SMSActivity.this);
         if(DC.equals("1"))
             startActivity(new Intent("com.example.taxi_full.HomeDriver"));
-            else
-        startActivity(new Intent("com.example.taxi_full.Home"));
+        else
+            startActivity(new Intent("com.example.taxi_full.Home"));
     }
 }
