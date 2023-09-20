@@ -2,6 +2,8 @@ package com.example.taxi_full.ui.home;
 
 import static android.content.Context.SENSOR_SERVICE;
 
+import static com.yandex.runtime.Runtime.getApplicationContext;
+
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -9,6 +11,9 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -19,6 +24,8 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
@@ -76,7 +83,6 @@ public class HomeFragmentDriver extends Fragment {
     private float gyroscope = 0f;
     private String[][] newData;
     private int[] newImg;
-
 
 
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -160,7 +166,6 @@ public class HomeFragmentDriver extends Fragment {
 
         mSensorManager = (SensorManager) getActivity().getSystemService(SENSOR_SERVICE);
         defaultGyroscope = mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-
 
         return root;
     }
@@ -353,49 +358,68 @@ public class HomeFragmentDriver extends Fragment {
     }
 
     private void socketCars(String s) throws InterruptedException {
-        Runnable getOrders = () -> {
+        DBClass = new DBClass();
+        String hash = DBClass.getHash(binding.getRoot().getContext());
+        String url = URL_API + "/";
+        countOrders = binding.getRoot().findViewById(R.id.count);
+
+
+        Runnable ord = () -> {
+            countOrders = binding.getRoot().findViewById(R.id.count);
+            list = binding.getRoot().findViewById(R.id.listView);
             try {
-                if(data != null & dataImg != null) {
-                    Arrays.fill(data, null);
-                    Arrays.fill(dataImg, 0);
-                }
-                DBClass db = new DBClass();
-                String hash = db.getHash(getContext());
-                if (!HttpApi.getId(URL_API_CAR + hash).equals("0")) {
-                    Type listType = new TypeToken<List<RootAllOrders>>() {
-                    }.getType();
-                    List<RootAllOrders> orders = new Gson().fromJson(s, listType);
-                    RootCars rootCars = new Gson().fromJson(HttpApi.getId(URL_API_CAR + hash), RootCars.class);
-                    int count = 0;
-                    for (int j = 0; j < orders.size(); j++) {
-                        if (orders.get(j).getClassOrder().equals(rootCars.getClassCar()))
-                            count++;
-                    }
-                    String orC = "У вас " + count + " новых запросов";
-                    data = new String[count][6];
-                    dataImg = new int[count];
-                    requireActivity().runOnUiThread(() -> countOrders.setText(orC));
-                    for (int i = 0; i < count; i++) {
-                        if (orders.get(i).getClassOrder().equals(rootCars.getClassCar())) {
-                            data[i][0] = orders.get(i).getNameUser();
-                            data[i][1] = orders.get(i).getDistance();
-                            data[i][2] = orders.get(i).getPrice();
-                            data[i][3] = orders.get(i).getStart_string();
-                            data[i][4] = orders.get(i).getFinish_string();
-                            data[i][5] = orders.get(i).getType_pay();
-                            dataImg[i] = R.drawable.profile_man;
+                if(!HttpApi.getId(url).equals("0")) {
+                    if (!HttpApi.getId(URL_API_CAR + hash).equals("0")) {
+                        Type listType = new TypeToken<List<RootAllOrders>>() {
+                        }.getType();
+                        List<RootAllOrders> orders = new Gson().fromJson(HttpApi.getId(url), listType);
+                        RootCars rootCars = new Gson().fromJson(HttpApi.getId(URL_API_CAR + hash), RootCars.class);
+                        int count = 0;
+                        for (int j = 0; j < orders.size(); j++) {
+                            if (orders.get(j).getClassOrder().equals(rootCars.getClassCar()))
+                                count++;
+                        }
+                        String orC = "У вас " + count + " новых запросов";
+                        requireActivity().runOnUiThread(() -> countOrders.setText(orC));
+                        data = new String[count][6];
+                        dataImg = new int[count];
+                        for (int i = 0; i < count; i++) {
+                            if (orders.get(i).getClassOrder().equals(rootCars.getClassCar())) {
+                                arrayInp(i, orders);
+                            }
+                        }
+                        newData = cityOrders(data, orders);
+                        newImg = dataImgOrders(data, orders);
+                        if(ordersIsCity(data)) {
+                            String orCN = "У вас " + newImg.length + " новых запросов";
+                            requireActivity().runOnUiThread(() -> countOrders.setText(orCN));
                         }
                     }
                 }
-            } catch (Exception e) {
-                Log.d("error", e.getMessage());
+                if(ordersIsCity(data)) {
+                    while (true) {
+                        if (newData != null && newImg != null) {
+                            requireActivity().runOnUiThread(() -> list.setAdapter(new AdaptorOrders(binding.getRoot().getContext(), newData, newImg)));
+                            break;
+                        }
+                    }
+                } else
+                    requireActivity().runOnUiThread(() -> list.setAdapter(new AdaptorOrders(binding.getRoot().getContext(), data, dataImg)));
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         };
-        Thread thread = new Thread(getOrders);
+        Thread thread = new Thread(ord);
         thread.start();
         thread.join();
 
-        list.setAdapter(new AdaptorOrders(binding.getRoot().getContext(), data, dataImg));
+        try {
+            Uri notify = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+            Ringtone r = RingtoneManager.getRingtone(binding.getRoot().getContext(), notify);
+            r.play();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private SensorEventListener gyroscopeSensorListener = new SensorEventListener() {

@@ -2,11 +2,15 @@ package com.example.taxi_full;
 
 import static android.os.SystemClock.sleep;
 
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.PointF;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -135,6 +139,16 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
     private int countUserLocation = 0;
     private List<PolylineMapObject> routesCollection = new ArrayList<>();
     public List<RootUserGeolocation> posts = null;
+    Dialog dialog;
+    final int DIALOG = 1;
+    private boolean dialogOrder = false;
+    TextView eco;
+    TextView middle;
+    TextView business;
+    Button typeNal;
+    Button typeOffNal;
+    ImageView home;
+    ImageView work;
 
 
     @Override
@@ -187,35 +201,51 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         start = findViewById(R.id.start_bottom);
         finish = findViewById(R.id.finish_bottom);
 
+        eco = findViewById(R.id.eco);
+        middle = findViewById(R.id.middle);
+        business = findViewById(R.id.business);
+        ImageView dollar_eco = findViewById(R.id.dollar_eco);
+        ImageView dollar_middle = findViewById(R.id.dollar_middle);
+        ImageView dollar_business = findViewById(R.id.dollar_business);
 
-        TextView eco = findViewById(R.id.eco);
-        TextView middle = findViewById(R.id.middle);
-        TextView business = findViewById(R.id.business);
+        typeNal = findViewById(R.id.type_home_nal);
+        typeOffNal = findViewById(R.id.type_home_offnal);
 
-        Button typeNal = findViewById(R.id.type_home_nal);
-        Button typeOffNal = findViewById(R.id.type_home_offnal);
+        typeNal.setBackgroundColor(Color.LTGRAY);
+        int lightBlue = ContextCompat.getColor(this, R.color.lightBlue);
 
         typeNal.setOnClickListener(view-> new Thread(()-> {
             HttpApi.put(URL_API_ORDERS_TREE + DBClass.getHash(this), "type_pay=" + 1);
-            typeNal.setBackgroundColor(Color.LTGRAY);
+            runOnUiThread(()->{
+                typeNal.setBackgroundColor(Color.LTGRAY);
+                typeOffNal.setBackgroundColor(lightBlue);
+            });
         }).start());
         typeOffNal.setOnClickListener(view-> new Thread(()-> {
             HttpApi.put(URL_API_ORDERS_TREE + DBClass.getHash(this), "type_pay=" + 2);
-            typeOffNal.setBackgroundColor(Color.LTGRAY);
+            runOnUiThread(()->{
+                typeOffNal.setBackgroundColor(Color.LTGRAY);
+                typeNal.setBackgroundColor(lightBlue);
+            });
         }).start());
 
-        //добавить в бд класс заказа
         eco.setOnClickListener(view -> {
             Class = 1;
-            eco.setBackgroundColor(Color.GRAY);
+            dollar_eco.setImageResource(R.drawable.dollar_black);
+            dollar_middle.setImageResource(R.drawable.dollar);
+            dollar_business.setImageResource(R.drawable.dollar);
         });
         middle.setOnClickListener(view -> {
             Class = 2;
-            middle.setBackgroundColor(Color.GRAY);
+            dollar_middle.setImageResource(R.drawable.dollar_black);
+            dollar_eco.setImageResource(R.drawable.dollar);
+            dollar_business.setImageResource(R.drawable.dollar);
         });
         business.setOnClickListener(view -> {
             Class = 3;
-            business.setBackgroundColor(Color.GRAY);
+            dollar_business.setImageResource(R.drawable.dollar_black);
+            dollar_middle.setImageResource(R.drawable.dollar);
+            dollar_eco.setImageResource(R.drawable.dollar);
         });
 
         StartPointGeolocation();
@@ -1039,23 +1069,26 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         Button go = findViewById(R.id.buttonGoSheet);
 
         go.setOnClickListener(view -> {
-            DBClass db = new DBClass();
-            String hash = db.getHash(HomeActivity.this);
-            String url = URL_API_USERS + "/" + hash;
-            String arg = "active=2" + "&class=" + Class;
-            new Thread(() -> {
-                if (HttpApi.put(url, arg) == HttpURLConnection.HTTP_OK) {
-                    showToast("Ожидайте пока приймут ваш заказ");
-                    RedirectToDriver();
-                    mWebSocketClientButton.send("buttonOn");
-                    runOnUiThread(()->{
-                        point1.setDraggable(false);
-                        point2.setDraggable(false);
-                    });
-                    //вывод всплыувуающего окна
-                }
-            }).start();
-
+            if(dialogOrder) {
+                DBClass db = new DBClass();
+                String hash = db.getHash(HomeActivity.this);
+                String url = URL_API_USERS + "/" + hash;
+                String arg = "active=2" + "&class=" + Class;
+                new Thread(() -> {
+                    if (HttpApi.put(url, arg) == HttpURLConnection.HTTP_OK) {
+                        showToast("Ожидайте пока примут ваш заказ");
+                        RedirectToDriver();
+                        mWebSocketClientButton.send("buttonOn");
+                        runOnUiThread(() -> {
+                            point1.setDraggable(false);
+                            point2.setDraggable(false);
+                            go.setEnabled(false);
+                            blockEditOrder();
+                        });
+                    }
+                }).start();
+            } else
+                runOnUiThread(()-> showDialog(DIALOG));
         });
     }
 
@@ -1298,8 +1331,8 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
     }
 
     private void setPointsHomeWork(){
-        ImageView home = findViewById(R.id.homeButt);
-        ImageView work = findViewById(R.id.workButt);
+        home = findViewById(R.id.homeButt);
+        work = findViewById(R.id.workButt);
         EditText homeEdit = findViewById(R.id.home);
         EditText workEdit = findViewById(R.id.work);
 
@@ -1374,6 +1407,53 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                 e.printStackTrace();
             }
         }).start());
+    }
+
+    @Override
+    protected Dialog onCreateDialog(int id) {
+        if (id == DIALOG) {
+            dialogOrder = true;
+            AlertDialog.Builder adb = new AlertDialog.Builder(this);
+            adb.setTitle("Проверьте правильность заказа");
+            adb.setMessage("Если все верно, нажмите \"Ок\" и снова на кнопку \"Заказать\"");
+            adb.setPositiveButton("OK", null);
+            dialog = adb.create();
+            dialog.setOnShowListener(dialogInterface -> {
+                Button positiveButton = ((AlertDialog)dialog).getButton(DialogInterface.BUTTON_POSITIVE);
+                positiveButton.setTextColor(getApplicationContext().getResources().getColor(R.color.dark_gray));
+                positiveButton.setTypeface(Typeface.DEFAULT_BOLD);
+                positiveButton.invalidate();
+            });
+
+            // обработчик отмены
+            dialog.setOnCancelListener(dialog -> {
+            });
+
+            // обработчик закрытия
+            dialog.setOnDismissListener(dialog -> {
+            });
+
+            return dialog;
+        }
+        return super.onCreateDialog(id);
+    }
+
+    private void getClassOrder() {
+
+    }
+
+    private void blockEditOrder() {
+        start.setEnabled(false);
+        finish.setEnabled(false);
+        eco.setOnClickListener(null);
+        middle.setOnClickListener(null);
+        business.setOnClickListener(null);
+        typeNal.setOnClickListener(null);
+        typeOffNal.setOnClickListener(null);
+        typeNal.setEnabled(false);
+        typeOffNal.setEnabled(false);
+        home.setOnClickListener(null);
+        work.setOnClickListener(null);
     }
 }
 

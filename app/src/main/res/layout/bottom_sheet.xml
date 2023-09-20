@@ -132,7 +132,7 @@
                 android:layout_height="wrap_content">
 
                 <ImageView
-                    android:id="@+id/imageView29"
+                    android:id="@+id/dollar_eco"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:contentDescription="@string/todo"
@@ -157,7 +157,7 @@
                 android:layout_height="wrap_content">
 
                 <ImageView
-                    android:id="@+id/imageView30"
+                    android:id="@+id/dollar_middle"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:contentDescription="@string/todo"
@@ -182,7 +182,7 @@
                 android:layout_height="wrap_content">
 
                 <ImageView
-                    android:id="@+id/imageView31"
+                    android:id="@+id/dollar_business"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:contentDescription="@string/todo"
