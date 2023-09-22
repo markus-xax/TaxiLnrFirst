@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -61,11 +62,13 @@ public class AdaptorOrders extends BaseAdapter {
         TextView nameSurname = v.findViewById(R.id.name_surname);
         TextView distance = v.findViewById(R.id.distance);
         TextView price = v.findViewById(R.id.price);
-        TextView addressStart = v.findViewById(R.id.addressStart);
-        TextView addressFinish = v.findViewById(R.id.addressFinish);
+        EditText addressStart = v.findViewById(R.id.addressStart);
+        EditText addressFinish = v.findViewById(R.id.addressFinish);
         ImageView profile = v.findViewById(R.id.profile_pictire);
         Button type_pay = v.findViewById(R.id.type_pay_driver_home);
         if(dataImg != null) {
+            addressStart.setEnabled(false);
+            addressFinish.setEnabled(false);
             nameSurname.setText(data[i][0]);
             distance.setText(data[i][1]);
             price.setText(data[i][2]);

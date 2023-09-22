@@ -48,6 +48,8 @@ import com.example.taxi_full.databinding.ActivityMainBinding;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import com.yandex.mapkit.MapKit;
 import com.yandex.mapkit.MapKitFactory;
@@ -85,6 +87,8 @@ import com.yandex.runtime.network.RemoteError;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft_17;
 import org.java_websocket.handshake.ServerHandshake;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -136,6 +140,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
     private DrivingRouter drivingRouter;
     private PlacemarkMapObject point1, point2;
     private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+    private final ScheduledExecutorService executor2 = Executors.newScheduledThreadPool(1);
     private int countUserLocation = 0;
     private List<PolylineMapObject> routesCollection = new ArrayList<>();
     public List<RootUserGeolocation> posts = null;
@@ -149,6 +154,9 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
     Button typeOffNal;
     ImageView home;
     ImageView work;
+    ImageView dollar_eco;
+    ImageView dollar_middle;
+    ImageView dollar_business;
 
 
     @Override
@@ -204,9 +212,9 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         eco = findViewById(R.id.eco);
         middle = findViewById(R.id.middle);
         business = findViewById(R.id.business);
-        ImageView dollar_eco = findViewById(R.id.dollar_eco);
-        ImageView dollar_middle = findViewById(R.id.dollar_middle);
-        ImageView dollar_business = findViewById(R.id.dollar_business);
+        dollar_eco = findViewById(R.id.dollar_eco);
+        dollar_middle = findViewById(R.id.dollar_middle);
+        dollar_business = findViewById(R.id.dollar_business);
 
         typeNal = findViewById(R.id.type_home_nal);
         typeOffNal = findViewById(R.id.type_home_offnal);
@@ -228,6 +236,8 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                 typeNal.setBackgroundColor(lightBlue);
             });
         }).start());
+
+        dollar_eco.setImageResource(R.drawable.dollar_black);
 
         eco.setOnClickListener(view -> {
             Class = 1;
@@ -259,6 +269,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         startCheck();
         addHomeWorkBottom();
         setPointsHomeWork();
+        getClassOrder();
     }
 
 
@@ -1067,29 +1078,39 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
 
     private void go(){
         Button go = findViewById(R.id.buttonGoSheet);
+        Runnable flag = () -> {
+            if(point2!=null) {
+                runOnUiThread(()-> go.setOnClickListener(view -> {
+                    if(dialogOrder) {
+                        DBClass db = new DBClass();
+                        String hash = db.getHash(HomeActivity.this);
+                        String url = URL_API_USERS + "/" + hash;
+                        String arg = "active=2" + "&class=" + Class;
+                        new Thread(() -> {
+                            if (HttpApi.put(url, arg) == HttpURLConnection.HTTP_OK) {
+                                showToast("Ожидайте пока примут ваш заказ");
+                                RedirectToDriver();
+                                mWebSocketClientButton.send("buttonOn");
+                                runOnUiThread(() -> {
+                                    if(point1 != null && point2 != null) {
+                                        point1.setDraggable(false);
+                                        point2.setDraggable(false);
+                                    }
+                                    go.setEnabled(false);
+                                    blockEditOrder();
+                                });
+                            }
+                        }).start();
+                    } else
+                        runOnUiThread(()-> showDialog(DIALOG));
+                }));
+                executor2.shutdown();
+            }
 
-        go.setOnClickListener(view -> {
-            if(dialogOrder) {
-                DBClass db = new DBClass();
-                String hash = db.getHash(HomeActivity.this);
-                String url = URL_API_USERS + "/" + hash;
-                String arg = "active=2" + "&class=" + Class;
-                new Thread(() -> {
-                    if (HttpApi.put(url, arg) == HttpURLConnection.HTTP_OK) {
-                        showToast("Ожидайте пока примут ваш заказ");
-                        RedirectToDriver();
-                        mWebSocketClientButton.send("buttonOn");
-                        runOnUiThread(() -> {
-                            point1.setDraggable(false);
-                            point2.setDraggable(false);
-                            go.setEnabled(false);
-                            blockEditOrder();
-                        });
-                    }
-                }).start();
-            } else
-                runOnUiThread(()-> showDialog(DIALOG));
-        });
+        };
+
+
+        executor.scheduleAtFixedRate(flag, 0, 1, TimeUnit.SECONDS);
     }
 
     private void dragPoints(){
@@ -1438,11 +1459,41 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         return super.onCreateDialog(id);
     }
 
-    private void getClassOrder() {
+    private void setImageDollarClass(RootOrderOne rootOrderOne){
+        if(rootOrderOne.get_class().equals("1"))
+            dollar_eco.setImageResource(R.drawable.dollar_black);
+        else if (rootOrderOne.get_class().equals("2"))
+            dollar_middle.setImageResource(R.drawable.dollar_black);
+        else
+            dollar_business.setImageResource(R.drawable.dollar_black);
+    }
 
+    private void getClassOrder() {
+        new Thread(() -> {
+            DBClass db = new DBClass();
+            String hash = db.getHash(HomeActivity.this);
+            try {
+                if (!HttpApi.getId(URL_API + "/" + hash).equals("0")) {
+                    RootOrderOne rootOrderOne = new Gson().fromJson(HttpApi.getId(URL_API + "/" + hash), RootOrderOne.class);
+                    if (rootOrderOne.getActive().equals("2")) {
+                        runOnUiThread(() -> {
+                            HomeActivity.this.blockEditOrder();
+                            HomeActivity.this.setImageDollarClass(rootOrderOne);
+                        });
+                    }
+                    if (rootOrderOne.getActive().equals("1")) {
+                        if(rootOrderOne.get_class() != null)
+                            runOnUiThread(()->setImageDollarClass(rootOrderOne));
+                    }
+                }
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }).start();
     }
 
     private void blockEditOrder() {
+        Button go = findViewById(R.id.buttonGoSheet);
         start.setEnabled(false);
         finish.setEnabled(false);
         eco.setOnClickListener(null);
@@ -1454,6 +1505,8 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         typeOffNal.setEnabled(false);
         home.setOnClickListener(null);
         work.setOnClickListener(null);
+        go.setEnabled(false);
+        go.setOnClickListener(null);
     }
 }
 

@@ -1,7 +1,15 @@
 package com.example.taxi_full.API.model;
 
+import androidx.annotation.NonNull;
+
+import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
+
 public class RootOrderOne {
     private String id, hash_user, hash_driver, start, finish, active,nameUser, nameDriver, error, start_string, finish_string, price, distance, type_pay;
+    @SerializedName("class")
+    @Expose
+    private String _class;
 
     public String getNameDriver() {
         return nameDriver;
@@ -113,5 +121,13 @@ public class RootOrderOne {
 
     public void setType_pay(String type_pay) {
         this.type_pay = type_pay;
+    }
+
+    public String get_class() {
+        return _class;
+    }
+
+    public void set_class(String _class) {
+        this._class = _class;
     }
 }
