@@ -501,6 +501,7 @@ public class HomeFragmentDriver extends Fragment {
                     newData[c][4] = orders.get(c).getFinish_string();
                     newData[c][5] = orders.get(c).getType_pay();
                 }
+                c++;
             }
         }
         return newData;
@@ -528,6 +529,7 @@ public class HomeFragmentDriver extends Fragment {
                 if (city[0].equals(myGeo())) {
                     newData[c] = R.drawable.profile_man;
                 }
+                c++;
             }
         }
         return newData;

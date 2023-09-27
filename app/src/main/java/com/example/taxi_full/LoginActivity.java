@@ -1,5 +1,6 @@
 package com.example.taxi_full;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -88,11 +89,14 @@ public class LoginActivity extends AppCompatActivity {
             String url = URL_API + phoneN.getText().toString() + "/" + dbClass.getDC(LoginActivity.this);
             new Thread(() -> {
                 try {
-                    RootUserOne root = null;
-                    root = new Gson().fromJson(HttpApi.getId(url), RootUserOne.class);
-                    if (root != null && (phoneN.getText().toString()).equals(root.getPhoneTrim())) {
-                        startActivity(new Intent("com.example.taxi_full.SMS_Code"));
-                    }
+                    if (!HttpApi.getId(url).equals("0")) {
+                        RootUserOne root = null;
+                        root = new Gson().fromJson(HttpApi.getId(url), RootUserOne.class);
+                        if (root != null && (phoneN.getText().toString()).equals(root.getPhoneTrim())) {
+                            setHashDC(root.getHash());
+                            startActivity(new Intent("com.example.taxi_full.SMS_Code"));
+                        }
+                    } else runOnUiThread(()-> Toast.makeText(this, "Пользователь с таким номером телефона не найден", Toast.LENGTH_LONG));
                 } catch (IOException e) {
                     Log.d("IOE-ex", e.getMessage());
                 }
@@ -170,6 +174,31 @@ public class LoginActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
         }).start();
+    }
+
+    public void setHashDC(String getHashHttp){
+        SQLiteDatabase database = dbHelper.getWritableDatabase();
+
+        Cursor cursor = database.query(DBHelper.TABLE_USER_VALUES, null, null, null, null, null, null);
+
+        if (cursor.moveToFirst()) {
+            int dcIndex = cursor.getColumnIndex(DBHelper.KEY_DC);
+            do {
+                int dc = cursor.getInt(dcIndex);
+                ContentValues contentValues = new ContentValues();
+                contentValues.put(DBHelper.KEY_TOKEN, getHashHttp);
+                if(dc == 1){
+                    database.update(DBHelper.TABLE_USER_VALUES, contentValues,DBHelper.KEY_DC+" = ?", new String[]{"1"});
+                } else if(dc == 0) {
+                    database.update(DBHelper.TABLE_USER_VALUES, contentValues,DBHelper.KEY_DC+" = ?", new String[]{"0"});
+                }
+            } while (cursor.moveToNext());
+
+        }
+
+        cursor.close();
+        database.close();
+
     }
 
 }

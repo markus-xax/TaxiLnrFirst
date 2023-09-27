@@ -1098,6 +1098,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                                     }
                                     go.setEnabled(false);
                                     blockEditOrder();
+                                    go.setText("Подбираем автомобиль");
                                 });
                             }
                         }).start();
