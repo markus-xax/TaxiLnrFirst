@@ -137,4 +137,5 @@
     <string name="select_card_number">Введите номер карты</string>
     <string name="risk_payment">Если платеж не поступил моментально, пожалуйста, подождите 24 часа. Если в течении этоговремени ничего не произошло, обратитесь на почту техподдержки: mail@mail.ru</string>
     <string name="auth">Войти</string>
+    <string name="off">Отменить</string>
 </resources>

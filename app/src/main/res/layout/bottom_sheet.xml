@@ -37,6 +37,15 @@
                 android:text="@string/buy"
                 android:textColor="@color/white"
                 android:textStyle="bold" />
+            <Button
+                android:id="@+id/buttonGoSheetOff"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:backgroundTint="@color/red_erro"
+                android:text="@string/off"
+                android:textColor="@color/white"
+                android:textStyle="bold"
+                android:visibility="gone"/>
         </FrameLayout>
 
         <LinearLayout

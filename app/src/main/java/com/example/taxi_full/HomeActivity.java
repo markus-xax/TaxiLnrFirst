@@ -261,6 +261,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         StartPointGeolocation();
         dragPoints();
         go();
+        unGo();
         echoTextMenu();
         startEdit();
         finishEdit();
@@ -270,6 +271,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         addHomeWorkBottom();
         setPointsHomeWork();
         getClassOrder();
+        isStartOrder();
     }
 
 
@@ -1075,9 +1077,32 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
             }
         }).start();
     }
-
+    private void unGo(){
+        Button go = findViewById(R.id.buttonGoSheet);
+        Button goOff = findViewById(R.id.buttonGoSheetOff);
+        goOff.setOnClickListener(view -> new Thread(() -> {
+            DBClass db = new DBClass();
+            String hash = db.getHash(HomeActivity.this);
+            String url = URL_API_USERS + "/" + hash;
+            String arg = "active=1" + "&class=" + Class;
+            if (HttpApi.put(url, arg) == HttpURLConnection.HTTP_OK) {
+                mWebSocketClientButton.send("buttonOn");
+                runOnUiThread(() -> {
+                    if(point1 != null && point2 != null) {
+                        point1.setDraggable(true);
+                        point2.setDraggable(true);
+                    }
+                    go.setEnabled(true);
+                    unBlockEditOrder();
+                    go.setVisibility(View.VISIBLE);
+                    goOff.setVisibility(View.GONE);
+                });
+            }
+        }).start());
+    }
     private void go(){
         Button go = findViewById(R.id.buttonGoSheet);
+        Button goOff = findViewById(R.id.buttonGoSheetOff);
         Runnable flag = () -> {
             if(point2!=null) {
                 runOnUiThread(()-> go.setOnClickListener(view -> {
@@ -1098,7 +1123,8 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                                     }
                                     go.setEnabled(false);
                                     blockEditOrder();
-                                    go.setText("Подбираем автомобиль");
+                                    go.setVisibility(View.GONE);
+                                    goOff.setVisibility(View.VISIBLE);
                                 });
                             }
                         }).start();
@@ -1497,17 +1523,48 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         Button go = findViewById(R.id.buttonGoSheet);
         start.setEnabled(false);
         finish.setEnabled(false);
-        eco.setOnClickListener(null);
-        middle.setOnClickListener(null);
-        business.setOnClickListener(null);
-        typeNal.setOnClickListener(null);
-        typeOffNal.setOnClickListener(null);
+        eco.setEnabled(false);
+        middle.setEnabled(false);
+        business.setEnabled(false);
         typeNal.setEnabled(false);
         typeOffNal.setEnabled(false);
-        home.setOnClickListener(null);
-        work.setOnClickListener(null);
+        typeNal.setEnabled(false);
+        typeOffNal.setEnabled(false);
         go.setEnabled(false);
-        go.setOnClickListener(null);
     }
+
+    private void unBlockEditOrder() {
+        Button go = findViewById(R.id.buttonGoSheet);
+        start.setEnabled(true);
+        finish.setEnabled(true);
+        eco.setEnabled(true);
+        middle.setEnabled(true);
+        business.setEnabled(true);
+        typeNal.setEnabled(true);
+        typeOffNal.setEnabled(true);
+        typeNal.setEnabled(true);
+        typeOffNal.setEnabled(true);
+        go.setEnabled(true);
+    }
+
+    private void isStartOrder(){
+        Button goOff = findViewById(R.id.buttonGoSheetOff);
+        new Thread(()->{
+            DBClass db = new DBClass();
+            String hash = db.getHash(HomeActivity.this);
+            try {
+                if (!HttpApi.getId(URL_API + "/" + hash).equals("0")) {
+                    RootOrderOne rootOrderOne = new Gson().fromJson(HttpApi.getId(URL_API + "/" + hash), RootOrderOne.class);
+                    if(rootOrderOne.getActive().equals("2")) {
+                        runOnUiThread(()-> goOff.setVisibility(View.VISIBLE));
+                        unGo();
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
 }
 

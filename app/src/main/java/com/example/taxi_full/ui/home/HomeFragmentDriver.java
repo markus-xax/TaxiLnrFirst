@@ -395,18 +395,24 @@ public class HomeFragmentDriver extends Fragment {
                             requireActivity().runOnUiThread(() -> countOrders.setText(orCN));
                         }
                     }
-                }
-                if(ordersIsCity(data)) {
-                    while (true) {
-                        if (newData != null && newImg != null) {
-                            requireActivity().runOnUiThread(() -> list.setAdapter(new AdaptorOrders(binding.getRoot().getContext(), newData, newImg)));
-                            break;
+                    if(ordersIsCity(data)) {
+                        while (true) {
+                            if (newData != null && newImg != null) {
+                                requireActivity().runOnUiThread(() -> list.setAdapter(new AdaptorOrders(binding.getRoot().getContext(), newData, newImg)));
+                                break;
+                            }
                         }
+                    } else {
+                        requireActivity().runOnUiThread(() -> list.setAdapter(new AdaptorOrders(binding.getRoot().getContext(), data, dataImg)));
                     }
-                } else
-                    requireActivity().runOnUiThread(() -> list.setAdapter(new AdaptorOrders(binding.getRoot().getContext(), data, dataImg)));
+                } else {
+                    String [][] d = new String[0][6];
+                    int [] dImg = new int[0];
+                    requireActivity().runOnUiThread(() -> list.setAdapter(new AdaptorOrders(binding.getRoot().getContext(), d, dImg)));
+                    requireActivity().runOnUiThread(() -> countOrders.setText("У вас 0 новых запросов"));
+                }
             } catch (IOException e) {
-                e.printStackTrace();
+                Log.d("лог", e.getMessage());
             }
         };
         Thread thread = new Thread(ord);
