@@ -30,6 +30,7 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.taxi_full.API.AdaptorOrders;
+import com.example.taxi_full.API.CityDriver;
 import com.example.taxi_full.API.DBClass;
 import com.example.taxi_full.API.HttpApi;
 import com.example.taxi_full.API.MyLocationListener;
@@ -230,7 +231,7 @@ public class HomeFragmentDriver extends Fragment {
         hashMap.put("Hash", hash);
         hashMap.put("OC", "Close");
         JSONObject jsonGeometry = new JSONObject(hashMap);
-        if(mWebSocketClient != null)
+        if(mWebSocketClientGeo != null)
             SendHash(jsonGeometry);
         super.onStop();
     }
@@ -243,7 +244,7 @@ public class HomeFragmentDriver extends Fragment {
         hashMap.put("Hash", hash);
         hashMap.put("OC", "Close");
         JSONObject jsonGeometry = new JSONObject(hashMap);
-        if(mWebSocketClient != null)
+        if(mWebSocketClientGeo != null)
             SendHash(jsonGeometry);
         super.onDestroy();
     }
@@ -473,13 +474,18 @@ public class HomeFragmentDriver extends Fragment {
         dataImg[i] = R.drawable.profile_man;
     }
     private String myGeo() throws IOException {
-        double lat = MyLocationListener.imHere.getLatitude();  // широта
-        double lon = MyLocationListener.imHere.getLongitude(); // долгота
-        RootGeolocation rootGeoStart = new Gson().fromJson(HttpApi.getId("https://geocode-maps.yandex.ru/1.x/?geocode=" + lon + "," + lat + "&apikey=" + GEOCODER_API_KEY + "&format=json&results=1&kind=house"), RootGeolocation.class);
-        String MyStringUK = rootGeoStart.getResponse().getGeoObjectCollection().getFeatureMember().get(0).getGeoObject().getDescription();
-        String MyStr = MyStringUK.replace("Украина","");
-        String[] f = MyStr.split(",");
-        return f[0];
+        if(CityDriver.city == null) {
+            double lat = MyLocationListener.imHere.getLatitude();  // широта
+            double lon = MyLocationListener.imHere.getLongitude(); // долгота
+            RootGeolocation rootGeoStart = new Gson().fromJson(HttpApi.getId("https://geocode-maps.yandex.ru/1.x/?geocode=" + lon + "," + lat + "&apikey=" + GEOCODER_API_KEY + "&format=json&results=1&kind=house"), RootGeolocation.class);
+            String MyStringUK = rootGeoStart.getResponse().getGeoObjectCollection().getFeatureMember().get(0).getGeoObject().getDescription();
+            String MyStr = MyStringUK.replace("Украина", "");
+            String[] f = MyStr.split(",");
+            CityDriver.city = f[0];
+            return f[0];
+        } else {
+            return CityDriver.city;
+        }
     }
     private boolean ordersIsCity(String[][] data) throws IOException {
         if(data != null) {

@@ -50,7 +50,7 @@ public class AdaptorOrders extends BaseAdapter {
         this.data = data;
         this.dataImg = dataImg;
 
-        connectToSocket();
+        //connectToSocket();
 
         inflater = (LayoutInflater)context.getSystemService(context.LAYOUT_INFLATER_SERVICE);
     }
@@ -120,6 +120,7 @@ public class AdaptorOrders extends BaseAdapter {
                                     if (active == 2)
                                         HttpApi.post(URL_DEBT, "hash=" + hash);
                                     try {
+                                        CityDriver.city = null;
                                         context.startActivity(new Intent("com.example.taxi_full.GoDriver"));
                                     } catch (Exception e) {
                                         e.printStackTrace();

@@ -133,7 +133,8 @@ public class HomeActivityDriver extends AppCompatActivity implements UserLocatio
         echoUserOrderText();
         try {
             Bundle b = getIntent().getExtras();
-            debtInd = b.getInt("debtInd");
+            if(b != null)
+                debtInd = b.getInt("debtInd");
         } catch (Exception e){
             e.printStackTrace();
         }
