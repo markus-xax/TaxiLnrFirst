@@ -50,6 +50,8 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.channels.NotYetConnectedException;
@@ -84,6 +86,9 @@ public class HomeFragmentDriver extends Fragment {
     private float gyroscope = 0f;
     private String[][] newData;
     private int[] newImg;
+    private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+    private boolean isPong;
+    private boolean isPongGeo;
 
 
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -93,8 +98,6 @@ public class HomeFragmentDriver extends Fragment {
         View root = binding.getRoot();
         list = root.findViewById(R.id.listView);
 
-        connectToSocket();
-        connectToSocketGeolocation();
         MyLocationListener.SetUpLocationListener(getContext());
 
         DBClass = new DBClass();
@@ -175,18 +178,24 @@ public class HomeFragmentDriver extends Fragment {
     public void onStart() {
         super.onStart();
         getGeolocation();
+        connectToSocket();
+        try {
+            connectToSocketGeolocation();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        pingPong("ping");
     }
 
     public void getGeolocation(){
         DBClass = new DBClass();
-        String hash = DBClass.getHash(getContext());
-        String DC = DBClass.getDC(getContext());
-        Runnable geoListener = new Runnable() {
+        new Thread(()-> {
+            String hash = DBClass.getHash(getContext());
+            String DC = DBClass.getDC(getContext());
             double Long = 0;
             double Latitude = 0;
-            @Override
-            public void run() {
-                if(iter == 0){
+            while(true) {
+                if (iter == 0) {
                     iter++;
                     double lat = MyLocationListener.imHere.getLatitude();  // широта
                     double lon = MyLocationListener.imHere.getLongitude(); // долгота
@@ -200,7 +209,7 @@ public class HomeFragmentDriver extends Fragment {
                     JSONObject jsonGeometry = new JSONObject(geo);
                     SendGeolocation(jsonGeometry);
                 } else {
-                    if(MyLocationListener.imHere.getLongitude() != Long && MyLocationListener.imHere.getLatitude() != Latitude){
+                    if (MyLocationListener.imHere.getLongitude() != Long && MyLocationListener.imHere.getLatitude() != Latitude) {
                         double lat = MyLocationListener.imHere.getLatitude();  // широта
                         double lon = MyLocationListener.imHere.getLongitude(); // долгота
                         geo.put("Longitude", lon);
@@ -214,12 +223,13 @@ public class HomeFragmentDriver extends Fragment {
                         SendGeolocation(jsonGeometry);
                     }
                 }
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
-        };
-
-        ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-        executor.scheduleAtFixedRate(geoListener, 0, 1, TimeUnit.SECONDS);
-
+        }).start();
 
     }
 
@@ -231,8 +241,16 @@ public class HomeFragmentDriver extends Fragment {
         hashMap.put("Hash", hash);
         hashMap.put("OC", "Close");
         JSONObject jsonGeometry = new JSONObject(hashMap);
-        if(mWebSocketClientGeo != null)
+        executor.shutdown();
+        if(mWebSocketClientGeo != null){
+        if(mWebSocketClientGeo.getConnection().isOpen()) {
             SendHash(jsonGeometry);
+            mWebSocketClientGeo.close();
+        }
+        }
+        if(mWebSocketClient.getConnection().isOpen()){
+            mWebSocketClient.close();
+        }
         super.onStop();
     }
 
@@ -244,17 +262,25 @@ public class HomeFragmentDriver extends Fragment {
         hashMap.put("Hash", hash);
         hashMap.put("OC", "Close");
         JSONObject jsonGeometry = new JSONObject(hashMap);
-        if(mWebSocketClientGeo != null)
-            SendHash(jsonGeometry);
+        executor.shutdown();
+        if(mWebSocketClientGeo != null) {
+            if (mWebSocketClientGeo.getConnection().isOpen()) {
+                SendHash(jsonGeometry);
+                mWebSocketClientGeo.close();
+            }
+        }
+        if(mWebSocketClient.getConnection().isOpen()){
+            mWebSocketClient.close();
+        }
         super.onDestroy();
     }
 
     private void connectToSocket() {
         URI uri;
         try {
-            uri = new URI("ws"+"://"+"45.86.47.12:27810");
-        } catch (URISyntaxException e) {
-            Log.d("----uri------",e.getMessage());
+            uri = new URI("websocket"+"://"+"45.86.47.12:32000");
+        } catch (URISyntaxException e){
+            Log.d("----uri------", e.getMessage());
             return;
         }
         mWebSocketClient = new WebSocketClient(uri, new Draft_17()) {
@@ -265,10 +291,14 @@ public class HomeFragmentDriver extends Fragment {
             @Override
             public void onMessage(String s) {
                 Log.d("--mes--", s);
-                try {
-                    socketCars(s);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+                if(s.equals("pong")) {
+                    isPong = true;
+                } else {
+                    try {
+                        socketCars(s);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
             @Override
@@ -279,11 +309,16 @@ public class HomeFragmentDriver extends Fragment {
             public void onError(Exception e) {
                 Log.d("Websocket", "Error " + e.getMessage());
             }
+
         };
-        mWebSocketClient.connect();
+        try {
+            mWebSocketClient.connectBlocking();
+        } catch (InterruptedException e) {
+            Log.d("ошибка", e.getMessage());
+        }
     }
 
-    private void connectToSocketGeolocation(){
+    private void connectToSocketGeolocation() throws InterruptedException {
         URI uri;
         try {
             uri = new URI("ws"+"://"+"45.86.47.12:27800");
@@ -305,7 +340,11 @@ public class HomeFragmentDriver extends Fragment {
 
             }
             @Override
-            public void onMessage(String s) {}
+            public void onMessage(String s) {
+                if (s.equals("ponggeo")) {
+                    isPongGeo = true;
+                }
+            }
             @Override
             public void onClose(int i, String s, boolean b) {
                 Log.d("WebsocketGeo", "Closed " + s);
@@ -316,7 +355,7 @@ public class HomeFragmentDriver extends Fragment {
                 Log.d("WebsocketGeo", "Error " + e.getMessage());
             }
         };
-        mWebSocketClientGeo.connect();
+        mWebSocketClientGeo.connectBlocking();
     }
 
     @Override
@@ -327,7 +366,10 @@ public class HomeFragmentDriver extends Fragment {
 
     private void SendHash(JSONObject hash){
         try{
-            mWebSocketClientGeo.send(String.valueOf(hash));
+            if(mWebSocketClientGeo != null) {
+                if (mWebSocketClientGeo.getConnection().isOpen())
+                    mWebSocketClientGeo.send(String.valueOf(hash));
+            }
         } catch (NotYetConnectedException e){
             Log.d("---send---", e.getMessage());
         }
@@ -335,7 +377,10 @@ public class HomeFragmentDriver extends Fragment {
 
     private void SendGeolocation(JSONObject geolocation){
         try{
-            mWebSocketClientGeo.send(String.valueOf(geolocation));
+            if(mWebSocketClientGeo != null) {
+                if (mWebSocketClientGeo.getConnection().isOpen())
+                    mWebSocketClientGeo.send(String.valueOf(geolocation));
+            }
         } catch (NotYetConnectedException e){
             Log.d("---send---", e.getMessage());
         }
@@ -545,6 +590,43 @@ public class HomeFragmentDriver extends Fragment {
             }
         }
         return newData;
+    }
+
+    private void pingPong(String hash) {
+        new Thread(()->{
+            while(true){
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                if(mWebSocketClient != null) {
+                    if (mWebSocketClient.getConnection().isOpen())
+                        mWebSocketClient.send("{\"ping\" : \"" + hash + "\"}");
+                }
+                if(mWebSocketClientGeo != null) {
+                    if (mWebSocketClientGeo.getConnection().isOpen())
+                        mWebSocketClientGeo.send("{\"ping\" : \"" + hash + "\"}");
+                }
+                isPong = false;
+                isPongGeo = false;
+                try {
+                    Thread.sleep(2000);
+                    if(!isPong) {
+                        if(mWebSocketClient.getConnection().isOpen())
+                            mWebSocketClient.close();
+                        connectToSocket();
+                    }
+                    if(!isPongGeo){
+                        if(mWebSocketClientGeo.getConnection().isOpen())
+                            mWebSocketClientGeo.close();
+                        connectToSocketGeolocation();
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
     }
 
 }

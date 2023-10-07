@@ -50,7 +50,7 @@ public class AdaptorOrders extends BaseAdapter {
         this.data = data;
         this.dataImg = dataImg;
 
-        //connectToSocket();
+        connectToSocket();
 
         inflater = (LayoutInflater)context.getSystemService(context.LAYOUT_INFLATER_SERVICE);
     }
@@ -162,7 +162,7 @@ public class AdaptorOrders extends BaseAdapter {
 
         URI uri;
         try {
-            uri = new URI("ws"+"://"+"45.86.47.12:27810");
+            uri = new URI("ws"+"://"+"45.86.47.12:32000");
         } catch (URISyntaxException e) {
             Log.d("----uri------",e.getMessage());
             return;

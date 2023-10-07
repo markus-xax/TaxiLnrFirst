@@ -273,11 +273,12 @@ public class HomeActivityDriver extends AppCompatActivity implements UserLocatio
 
             @Override
             public void onOpen(ServerHandshake serverHandshake) {
-                Log.d("Websocket", "Opened");
+                Log.d("WebsocketGeoHome", "Opened");
             }
 
             @Override
             public void onMessage(String s) {
+                Log.d("массаж", s);
                     try {
                         Runnable getCars = () -> {
                             DBClass = new DBClass();
