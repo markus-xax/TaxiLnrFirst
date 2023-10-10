@@ -157,6 +157,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
     ImageView dollar_eco;
     ImageView dollar_middle;
     ImageView dollar_business;
+    private boolean isPong;
 
 
     @Override
@@ -203,7 +204,6 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         NavigationUI.setupWithNavController(navigationView, navController);
 
         connectToSocket();
-        connectToSocketButton();
         dbHelper = new DBHelper(this);
 
         start = findViewById(R.id.start_bottom);
@@ -305,6 +305,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         } catch (Exception e) {
             e.printStackTrace();
         }
+        pingPong("ping");
     }
 
     @Override
@@ -661,7 +662,32 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
     public void showToast(final String toast) {
         runOnUiThread(() -> Toast.makeText(HomeActivity.this, toast, Toast.LENGTH_LONG).show());
     }
-
+    private void pingPong(String hash) {
+        new Thread(()->{
+            while(true){
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                if(mWebSocketClient != null) {
+                    if (mWebSocketClient.getConnection().isOpen())
+                        mWebSocketClient.send("{\"ping\" : \"" + hash + "\"}");
+                }
+                isPong = false;
+                try {
+                    Thread.sleep(2000);
+                    if(!isPong) {
+                        if(mWebSocketClient.getConnection().isOpen())
+                            mWebSocketClient.close();
+                        connectToSocket();
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
     private void connectToSocket() {
         URI uri;
         try {
@@ -680,95 +706,100 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
             private boolean flag = false;
             @Override
             public void onMessage(String s) {
-                try {
-                    Runnable getCars = () -> {
-                        DBClass = new DBClass();
-                        Type listType = new TypeToken<List<RootUserGeolocation>>() {
-                        }.getType();
-                        posts = new Gson().fromJson(s, listType);
-                        HashMap<String, Object> arr = new HashMap<>();
-                        for (int i = 0; i < posts.size(); i++) {
-                            arr.put("Latitude", posts.get(i).getLatitude());
-                            arr.put("Longitude", posts.get(i).getLongitude());
-                            arr.put("DC", posts.get(i).getDc());
-                            arr.put("Duration", posts.get(i).getDuration());
-                            users.put(posts.get(i).getHash(), arr);
-                            if (colorsCars != null && colorsCars.get(posts.get(i).getHash()) == null) {
-                                try {
-                                    if (!HttpApi.getId(URL_CARS + posts.get(i).getHash()).equals("0")) {
-                                        RootCars cars = new Gson().fromJson(HttpApi.getId(URL_CARS + posts.get(i).getHash()), RootCars.class);
-                                        colorsCars.put(posts.get(i).getHash(), cars.getColor());
-                                    }
-                                } catch (IOException e) {
-                                    colorsCars = null;
-                                }
-                            }
-                        }
-                    };
-                    if (!s.equals("[[]]")) {
-                        flag = true;
-                        Thread thread = new Thread(getCars);
-                        thread.start();
-                        thread.join();
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                if (flag) {
-                    runOnUiThread(() -> {
-                        for (int i = 0; i < posts.size(); i++) {
-                            if (colorsCars != null) {
-                                if (!DBClass.getHash(HomeActivity.this).equals(posts.get(i).getHash())) {
-                                    if (DC.get(posts.get(i).getHash()) == null) {
-                                        if (colorsCars.get(posts.get(i).getHash()) != null) {
-                                            Point cars = new Point(Double.parseDouble(String.valueOf(users.get(posts.get(i).getHash()).get("Latitude"))), Double.parseDouble(String.valueOf(users.get(posts.get(i).getHash()).get("Longitude"))));
-                                            switch (colorsCars.get(posts.get(i).getHash())) {
-                                                case 1:
-                                                    PlacemarkMapObject m = mapObjects.addPlacemark(cars, ImageProvider.fromResource(HomeActivity.this, R.drawable.car_white_small));
-                                                    m.setIconStyle(new IconStyle().setRotationType(RotationType.ROTATE));
-                                                    m.setDirection(Float.parseFloat(users.get(posts.get(i).getHash()).get("Duration").toString()));
-                                                    DC.put(posts.get(i).getHash(), m);
-                                                    break;
-                                                case 2:
-                                                    PlacemarkMapObject mB = mapObjects.addPlacemark(cars, ImageProvider.fromResource(HomeActivity.this, R.drawable.car_black_small));
-                                                    mB.setIconStyle(new IconStyle().setRotationType(RotationType.ROTATE));
-                                                    mB.setDirection(Float.parseFloat(users.get(posts.get(i).getHash()).get("Duration").toString()));
-                                                    DC.put(posts.get(i).getHash(), mB);
-                                                    break;
-                                                case 3:
-                                                    PlacemarkMapObject mBl = mapObjects.addPlacemark(cars, ImageProvider.fromResource(HomeActivity.this, R.drawable.car_blue_small));
-                                                    mBl.setIconStyle(new IconStyle().setRotationType(RotationType.ROTATE));
-                                                    mBl.setDirection(Float.parseFloat(users.get(posts.get(i).getHash()).get("Duration").toString()));
-                                                    DC.put(posts.get(i).getHash(), mBl);
-                                                    break;
-                                                case 4:
-                                                    PlacemarkMapObject mBG = mapObjects.addPlacemark(cars, ImageProvider.fromResource(HomeActivity.this, R.drawable.car_green_small));
-                                                    mBG.setIconStyle(new IconStyle().setRotationType(RotationType.ROTATE));
-                                                    mBG.setDirection(Float.parseFloat(users.get(posts.get(i).getHash()).get("Duration").toString()));
-                                                    DC.put(posts.get(i).getHash(), mBG);
-                                                    break;
-                                                case 5:
-                                                    PlacemarkMapObject mR = mapObjects.addPlacemark(cars, ImageProvider.fromResource(HomeActivity.this, R.drawable.car_red_small));
-                                                    mR.setIconStyle(new IconStyle().setRotationType(RotationType.ROTATE));
-                                                    mR.setDirection(Float.parseFloat(users.get(posts.get(i).getHash()).get("Duration").toString()));
-                                                    DC.put(posts.get(i).getHash(), mR);
-                                                    break;
-                                                case 6:
-                                                    PlacemarkMapObject mY = mapObjects.addPlacemark(cars, ImageProvider.fromResource(HomeActivity.this, R.drawable.car_yellow_small));
-                                                    mY.setIconStyle(new IconStyle().setRotationType(RotationType.ROTATE));
-                                                    mY.setDirection(Float.parseFloat(users.get(posts.get(i).getHash()).get("Duration").toString()));
-                                                    DC.put(posts.get(i).getHash(), mY);
-                                                    break;
-                                            }
+                Log.d("массаж2", s);
+                if(s.equals("ponggeo")) {
+                    isPong = true;
+                } else {
+                    try {
+                        Runnable getCars = () -> {
+                            DBClass = new DBClass();
+                            Type listType = new TypeToken<List<RootUserGeolocation>>() {
+                            }.getType();
+                            posts = new Gson().fromJson(s, listType);
+                            HashMap<String, Object> arr = new HashMap<>();
+                            for (int i = 0; i < posts.size(); i++) {
+                                arr.put("Latitude", posts.get(i).getLatitude());
+                                arr.put("Longitude", posts.get(i).getLongitude());
+                                arr.put("DC", posts.get(i).getDc());
+                                arr.put("Duration", posts.get(i).getDuration());
+                                users.put(posts.get(i).getHash(), arr);
+                                if (colorsCars != null && colorsCars.get(posts.get(i).getHash()) == null) {
+                                    try {
+                                        if (!HttpApi.getId(URL_CARS + posts.get(i).getHash()).equals("0")) {
+                                            RootCars cars = new Gson().fromJson(HttpApi.getId(URL_CARS + posts.get(i).getHash()), RootCars.class);
+                                            colorsCars.put(posts.get(i).getHash(), cars.getColor());
                                         }
-                                    } else {
-                                        DC.get(posts.get(i).getHash()).setGeometry(new Point(Double.parseDouble(String.valueOf(users.get(posts.get(i).getHash()).get("Latitude"))), Double.parseDouble(String.valueOf(users.get(posts.get(i).getHash()).get("Longitude")))));
-                                        DC.get(posts.get(i).getHash()).setDirection(Float.parseFloat(users.get(posts.get(i).getHash()).get("Duration").toString()));
+                                    } catch (IOException e) {
+                                        colorsCars = null;
                                     }
                                 }
                             }
+                        };
+                        if (!s.equals("[[]]")) {
+                            flag = true;
+                            Thread thread = new Thread(getCars);
+                            thread.start();
+                            thread.join();
                         }
-                    });
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    if (flag) {
+                        runOnUiThread(() -> {
+                            for (int i = 0; i < posts.size(); i++) {
+                                if (colorsCars != null) {
+                                    if (!DBClass.getHash(HomeActivity.this).equals(posts.get(i).getHash())) {
+                                        if (DC.get(posts.get(i).getHash()) == null) {
+                                            if (colorsCars.get(posts.get(i).getHash()) != null) {
+                                                Point cars = new Point(Double.parseDouble(String.valueOf(users.get(posts.get(i).getHash()).get("Latitude"))), Double.parseDouble(String.valueOf(users.get(posts.get(i).getHash()).get("Longitude"))));
+                                                switch (colorsCars.get(posts.get(i).getHash())) {
+                                                    case 1:
+                                                        PlacemarkMapObject m = mapObjects.addPlacemark(cars, ImageProvider.fromResource(HomeActivity.this, R.drawable.car_white_small));
+                                                        m.setIconStyle(new IconStyle().setRotationType(RotationType.ROTATE));
+                                                        m.setDirection(Float.parseFloat(users.get(posts.get(i).getHash()).get("Duration").toString()));
+                                                        DC.put(posts.get(i).getHash(), m);
+                                                        break;
+                                                    case 2:
+                                                        PlacemarkMapObject mB = mapObjects.addPlacemark(cars, ImageProvider.fromResource(HomeActivity.this, R.drawable.car_black_small));
+                                                        mB.setIconStyle(new IconStyle().setRotationType(RotationType.ROTATE));
+                                                        mB.setDirection(Float.parseFloat(users.get(posts.get(i).getHash()).get("Duration").toString()));
+                                                        DC.put(posts.get(i).getHash(), mB);
+                                                        break;
+                                                    case 3:
+                                                        PlacemarkMapObject mBl = mapObjects.addPlacemark(cars, ImageProvider.fromResource(HomeActivity.this, R.drawable.car_blue_small));
+                                                        mBl.setIconStyle(new IconStyle().setRotationType(RotationType.ROTATE));
+                                                        mBl.setDirection(Float.parseFloat(users.get(posts.get(i).getHash()).get("Duration").toString()));
+                                                        DC.put(posts.get(i).getHash(), mBl);
+                                                        break;
+                                                    case 4:
+                                                        PlacemarkMapObject mBG = mapObjects.addPlacemark(cars, ImageProvider.fromResource(HomeActivity.this, R.drawable.car_green_small));
+                                                        mBG.setIconStyle(new IconStyle().setRotationType(RotationType.ROTATE));
+                                                        mBG.setDirection(Float.parseFloat(users.get(posts.get(i).getHash()).get("Duration").toString()));
+                                                        DC.put(posts.get(i).getHash(), mBG);
+                                                        break;
+                                                    case 5:
+                                                        PlacemarkMapObject mR = mapObjects.addPlacemark(cars, ImageProvider.fromResource(HomeActivity.this, R.drawable.car_red_small));
+                                                        mR.setIconStyle(new IconStyle().setRotationType(RotationType.ROTATE));
+                                                        mR.setDirection(Float.parseFloat(users.get(posts.get(i).getHash()).get("Duration").toString()));
+                                                        DC.put(posts.get(i).getHash(), mR);
+                                                        break;
+                                                    case 6:
+                                                        PlacemarkMapObject mY = mapObjects.addPlacemark(cars, ImageProvider.fromResource(HomeActivity.this, R.drawable.car_yellow_small));
+                                                        mY.setIconStyle(new IconStyle().setRotationType(RotationType.ROTATE));
+                                                        mY.setDirection(Float.parseFloat(users.get(posts.get(i).getHash()).get("Duration").toString()));
+                                                        DC.put(posts.get(i).getHash(), mY);
+                                                        break;
+                                                }
+                                            }
+                                        } else {
+                                            DC.get(posts.get(i).getHash()).setGeometry(new Point(Double.parseDouble(String.valueOf(users.get(posts.get(i).getHash()).get("Latitude"))), Double.parseDouble(String.valueOf(users.get(posts.get(i).getHash()).get("Longitude")))));
+                                            DC.get(posts.get(i).getHash()).setDirection(Float.parseFloat(users.get(posts.get(i).getHash()).get("Duration").toString()));
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }
                 }
             }
 
@@ -814,7 +845,11 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                 Log.d("WebsocketH", "Error " + e.getMessage());
             }
         };
-        mWebSocketClientButton.connect();
+        try {
+            mWebSocketClientButton.connectBlocking();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
 
@@ -1086,7 +1121,9 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
             String url = URL_API_USERS + "/" + hash;
             String arg = "active=1" + "&class=" + Class;
             if (HttpApi.put(url, arg) == HttpURLConnection.HTTP_OK) {
+                connectToSocketButton();
                 mWebSocketClientButton.send("buttonOn");
+                mWebSocketClientButton.close();
                 runOnUiThread(() -> {
                     if(point1 != null && point2 != null) {
                         point1.setDraggable(true);
@@ -1115,7 +1152,9 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                             if (HttpApi.put(url, arg) == HttpURLConnection.HTTP_OK) {
                                 showToast("Ожидайте пока примут ваш заказ");
                                 RedirectToDriver();
+                                connectToSocketButton();
                                 mWebSocketClientButton.send("buttonOn");
+                                mWebSocketClientButton.close();
                                 runOnUiThread(() -> {
                                     if(point1 != null && point2 != null) {
                                         point1.setDraggable(false);
