@@ -74,7 +74,7 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
 
     private WebSocketClient mWebSocketClient;
     private WebSocketClient mWebSocketClientNotifications;
-    private final TCPSocket tcpSocket = new TCPSocket();
+    //private final TCPSocket tcpSocket = new TCPSocket();
     private String hash;
     private DBClass dbClass = new DBClass();
     private final String URL_API_USERS = "http://45.86.47.12/api/users";
@@ -96,6 +96,7 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
     private String DistanceRoute,TimeRoute;
     private TextView time;
     private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+    private boolean isPong;
 
 
     @Override
@@ -129,11 +130,11 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
         time = findViewById(R.id.time);
         TextView price = findViewById(R.id.price);
         TextView distance = findViewById(R.id.distance);
-        new Thread(() -> {
-            try {
-                tcpSocket.TCP_Conn(19800);
-            } catch (IOException e) {Log.d("stringS", e.getMessage());}
-        }).start();
+//        new Thread(() -> {
+//            try {
+//                tcpSocket.TCP_Conn(19800);
+//            } catch (IOException e) {Log.d("stringS", e.getMessage());}
+//        }).start();
 
         new Thread(()->{
             try {
@@ -203,9 +204,6 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
     @Override
     protected void onStop() {
         if(mWebSocketClient.getConnection().isOpen()) {
-            new Thread(() -> {
-                try {tcpSocket.close();} catch (IOException e) {e.printStackTrace();}
-            }).start();
             mWebSocketClient.close();
         }
         mapView.onStop();
@@ -215,14 +213,8 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
 
     @Override
     protected void onDestroy() {
-        if(!tcpSocket.is_close()) {
-            new Thread(() -> {
-                try {
-                    tcpSocket.close();
-                } catch (IOException e) {e.printStackTrace();}
-            }).start();
+        if (mWebSocketClient.getConnection().isOpen())
             mWebSocketClient.close();
-        }
         super.onDestroy();
     }
 
@@ -233,13 +225,14 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
         mapView.onStart();
         connectToSocket();
         submitRequest();
+        pingPong("ping");
     }
 
     private void connectToSocket() {
         URI uri;
         try {
             DBClass db = new DBClass();
-            uri = new URI("ws"+"://"+"45.86.47.12:28720/?user="+db.getHash(this));
+            uri = new URI("ws"+"://"+"45.86.47.12:28720");
         } catch (URISyntaxException e) {
             Log.d("----uri------",e.getMessage());
             return;
@@ -249,27 +242,32 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
             @Override
             public void onOpen(ServerHandshake serverHandshake) {
                 Log.d("Websocket", "Opened");
+                mWebSocketClient.send("{\"newUser\" : \""+ DBClass.getHash(getBaseContext()) +"\"}");
             }
             @Override
             public void onMessage(String s) {
                 Log.d("stringS", s);
-                RootGeolocationRoom geo = new Gson().fromJson(s, RootGeolocationRoom.class);
-                if(geolocation != null && !geolocation.isEmpty()){
-                    geolocation.clear();
-                }
-                geolocation.put("Longitude", geo.getLongitude());
-                geolocation.put("Latitude", geo.getLatitude());
-                user = new Point(Double.parseDouble((String) geolocation.get("Latitude")), Double.parseDouble((String) geolocation.get("Longitude")));
-                if(count == 0) {
-                    runOnUiThread(()->{
-                        placemarkMapObject = mapObjects.addPlacemark(user,
-                                ImageProvider.fromResource(GoActivityDriver.this, R.drawable.user_location));
-                        count++;
-                    });
+                if(s.equals("pong")){
+                    isPong = true;
                 } else {
-                    runOnUiThread(()->{
-                        placemarkMapObject.setGeometry(user);
-                    });
+                    RootGeolocationRoom geo = new Gson().fromJson(s, RootGeolocationRoom.class);
+                    if (geolocation != null && !geolocation.isEmpty()) {
+                        geolocation.clear();
+                    }
+                    geolocation.put("Longitude", geo.getLongitude());
+                    geolocation.put("Latitude", geo.getLatitude());
+                    user = new Point(Double.parseDouble((String) geolocation.get("Latitude")), Double.parseDouble((String) geolocation.get("Longitude")));
+                    if (count == 0) {
+                        runOnUiThread(() -> {
+                            placemarkMapObject = mapObjects.addPlacemark(user,
+                                    ImageProvider.fromResource(GoActivityDriver.this, R.drawable.user_location));
+                            count++;
+                        });
+                    } else {
+                        runOnUiThread(() -> {
+                            placemarkMapObject.setGeometry(user);
+                        });
+                    }
                 }
             }
             @Override
@@ -350,7 +348,8 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
                         jsonGeometry.put("Longitude", userLocationView.getArrow().getGeometry().getLongitude());
                         jsonGeometry.put("Latitude", userLocationView.getArrow().getGeometry().getLatitude());
                         jsonGeometry.put("user", r.getHash_user());
-                        new Thread(()->{tcpSocket.send(jsonGeometry);}).start();
+                        //new Thread(()->{tcpSocket.send(jsonGeometry);}).start();
+                        mWebSocketClient.send(jsonGeometry.toString());
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -377,7 +376,8 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
                         jsonGeometry.put("Longitude", userLocationView.getArrow().getGeometry().getLongitude());
                         jsonGeometry.put("Latitude", userLocationView.getArrow().getGeometry().getLatitude());
                         jsonGeometry.put("user", r.getHash_user());
-                        new Thread(()->{tcpSocket.send(jsonGeometry);}).start();
+                        //new Thread(()->{tcpSocket.send(jsonGeometry);}).start();
+                        mWebSocketClient.send(jsonGeometry.toString());
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -486,5 +486,31 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
 
 
         executor.scheduleAtFixedRate(geoListener, 0, 5, TimeUnit.SECONDS);
+    }
+    private void pingPong(String hash) {
+        new Thread(()->{
+            while(true){
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                if(mWebSocketClient != null) {
+                    if (mWebSocketClient.getConnection().isOpen())
+                        mWebSocketClient.send("{\"ping\" : \"" + hash + "\"}");
+                }
+                isPong = false;
+                try {
+                    Thread.sleep(2000);
+                    if(!isPong) {
+                        if(mWebSocketClient.getConnection().isOpen())
+                            mWebSocketClient.close();
+                        connectToSocket();
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
     }
 }

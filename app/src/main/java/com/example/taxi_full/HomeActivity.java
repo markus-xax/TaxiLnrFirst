@@ -946,6 +946,13 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         //super.onBackPressed();
     }
 
+    private int getPrice(){
+        new Thread(()->{
+            
+        }).start();
+        return 0;
+    }
+
     private void bottomEditStartFinishPoint(){
         MyLocationListener.SetUpLocationListener(this);
         DBClass DBClass = new DBClass();
