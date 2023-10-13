@@ -22,7 +22,6 @@ import androidx.core.content.ContextCompat;
 
 import com.example.taxi_full.API.DBClass;
 import com.example.taxi_full.API.HttpApi;
-import com.example.taxi_full.API.TCPSocket;
 import com.example.taxi_full.API.model.RootCars;
 import com.example.taxi_full.API.model.RootGeolocationRoom;
 import com.example.taxi_full.API.model.RootNotifications;
@@ -472,9 +471,27 @@ public class GoActivityUser extends AppCompatActivity implements UserLocationObj
             }
         }
         mapObjects.addPolyline(smallRoute);
-
-        time.setText(TimeRoute);
-        time2.setText(TimeRoute);
+        new Thread(()-> {
+            while(true) {
+                runOnUiThread(()->{
+                    time.setText(TimeRoute);
+                    time2.setText(TimeRoute);
+                });
+                try {
+                    Thread.sleep(60000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                String[] tm = TimeRoute.split("\\D+");
+                if(Integer.parseInt(String.join("", tm)) == 0)
+                    break;
+                else {
+                    int tmi = Integer.parseInt(String.join("", tm));
+                    tmi--;
+                    TimeRoute = String.valueOf(tmi)+" мин";
+                }
+            }
+        }).start();
     }
 
     @Override

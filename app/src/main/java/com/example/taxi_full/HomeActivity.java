@@ -12,6 +12,8 @@ import android.graphics.Color;
 import android.graphics.PointF;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MotionEvent;
@@ -948,7 +950,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
 
     private int getPrice(){
         new Thread(()->{
-            
+
         }).start();
         return 0;
     }
@@ -1183,7 +1185,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         };
 
 
-        executor.scheduleAtFixedRate(flag, 0, 1, TimeUnit.SECONDS);
+        executor.scheduleAtFixedRate(flag, 0, 500, TimeUnit.MILLISECONDS);
     }
 
     private void dragPoints(){
