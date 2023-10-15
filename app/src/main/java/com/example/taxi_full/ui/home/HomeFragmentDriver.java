@@ -414,6 +414,11 @@ public class HomeFragmentDriver extends Fragment {
             countOrders = binding.getRoot().findViewById(R.id.count);
             list = binding.getRoot().findViewById(R.id.listView);
             try {
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 if(!HttpApi.getId(url).equals("0")) {
                     if (!HttpApi.getId(URL_API_CAR + hash).equals("0")) {
                         Type listType = new TypeToken<List<RootAllOrders>>() {

@@ -248,7 +248,7 @@ public class HomeActivityDriver extends AppCompatActivity implements UserLocatio
                         if(rootUserOne.getRate() == null || rootUserOne.getRate().equals(""))
                             rate.setText("5");
                         else
-                            rate.setText(rootUserOne.getRate());
+                            rate.setText(rootUserOne.getRate()); // ошибкаааа
 
                         orders_count.setText(String.valueOf(finalCount_orders));
                         incoming_day.setText(String.valueOf(incomingDriver));
@@ -278,7 +278,6 @@ public class HomeActivityDriver extends AppCompatActivity implements UserLocatio
 
             @Override
             public void onMessage(String s) {
-                Log.d("массаж", s);
                     try {
                         Runnable getCars = () -> {
                             DBClass = new DBClass();

@@ -102,7 +102,7 @@ public class GoActivityUser extends AppCompatActivity implements UserLocationObj
     private final String URL_CARS = "http://45.86.47.12/api/cars";
     private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
     private DBClass DBClass = new DBClass();
-    private boolean isPong;
+    private boolean isPong, isPongNot;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -189,7 +189,7 @@ public class GoActivityUser extends AppCompatActivity implements UserLocationObj
 
     }
 
-    private void cancel(){
+    private void cancel() {
         Button cancel = findViewById(R.id.cancel);
         cancel.setOnClickListener(view -> {
             DBClass = new DBClass();
@@ -306,31 +306,36 @@ public class GoActivityUser extends AppCompatActivity implements UserLocationObj
             Log.d("----uri------",e.getMessage());
             return;
         }
+        DBClass db = new DBClass();
         mWebSocketClientNotifications = new WebSocketClient(uri, new Draft_17()) {
             @Override
             public void onOpen(ServerHandshake serverHandshake) {
                 Log.d("Websocket", "Opened");
+                mWebSocketClientNotifications.send("{\"newUser\" : \"" + db.getHash(getBaseContext()) + "\"}");
             }
             @Override
             public void onMessage(String s) {
-                DBClass db = new DBClass();
-                Log.d("stringS", s);
-                RootNotifications rootNotifications = new Gson().fromJson(s, RootNotifications.class);
-                //вывести уведомление
-                if (rootNotifications.getHash().equals(db.getHash(GoActivityUser.this))) {
-                    runOnUiThread(() -> {
-                        NotificationCompat.Builder builder =
-                                new NotificationCompat.Builder(GoActivityUser.this)
-                                        .setSmallIcon(R.mipmap.ic_launcher)
-                                        .setContentTitle("Taxi")
-                                        .setContentText(rootNotifications.getNotifications());
+                if (s.equals("pong"))
+                    isPongNot = true;
+                else {
+                    DBClass db = new DBClass();
+                    RootNotifications rootNotifications = new Gson().fromJson(s, RootNotifications.class);
+                    //вывести уведомление
+                    if (rootNotifications.getHash().equals(db.getHash(GoActivityUser.this))) {
+                        runOnUiThread(() -> {
+                            NotificationCompat.Builder builder =
+                                    new NotificationCompat.Builder(GoActivityUser.this)
+                                            .setSmallIcon(R.mipmap.ic_launcher)
+                                            .setContentTitle("Taxi")
+                                            .setContentText(rootNotifications.getNotifications());
 
-                        Notification notification = builder.build();
+                            Notification notification = builder.build();
 
-                        NotificationManager notificationManager =
-                                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-                        notificationManager.notify(1, notification);
-                    });
+                            NotificationManager notificationManager =
+                                    (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+                            notificationManager.notify(1, notification);
+                        });
+                    }
                 }
             }
             @Override
@@ -543,8 +548,8 @@ public class GoActivityUser extends AppCompatActivity implements UserLocationObj
                         executor.shutdown();
                         return;
                     }
-                    startActivity(new Intent("com.example.taxi_full.RequestUser"));
                     executor.shutdown();
+                    startActivity(new Intent("com.example.taxi_full.RequestUser"));
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -566,13 +571,23 @@ public class GoActivityUser extends AppCompatActivity implements UserLocationObj
                     if (mWebSocketClient.getConnection().isOpen())
                         mWebSocketClient.send("{\"ping\" : \"" + hash + "\"}");
                 }
+                if(mWebSocketClientNotifications != null) {
+                    if (mWebSocketClientNotifications.getConnection().isOpen())
+                        mWebSocketClientNotifications.send("{\"ping\" : \"" + hash + "\"}");
+                }
                 isPong = false;
+                isPongNot = false;
                 try {
                     Thread.sleep(2000);
                     if(!isPong) {
                         if(mWebSocketClient.getConnection().isOpen())
                             mWebSocketClient.close();
                         connectToSocket();
+                    }
+                    if(!isPongNot) {
+                        if(mWebSocketClientNotifications.getConnection().isOpen())
+                            mWebSocketClientNotifications.close();
+                        connectToSocketNotifications();
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();

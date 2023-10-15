@@ -96,7 +96,7 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
     private String DistanceRoute,TimeRoute;
     private TextView time;
     private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-    private boolean isPong;
+    private boolean isPong, isPongNot;
 
 
     @Override
@@ -184,11 +184,11 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
                         inc++;
                         if (mWebSocketClientNotifications.getConnection().isOpen()) {
                             send("Водитель приехал к месту посадки", rootOrderOne.getHash_user());
-                            return;
+                            break;
                         }
                         sleep(1000);
                         if (inc>3)
-                            return;
+                            break;
                     }
                     } catch (JSONException | IOException | InterruptedException e) {e.printStackTrace();}
                 }).start();
@@ -284,8 +284,8 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
 
     private void connectToSocketNotifications() {
         URI uri;
+        DBClass db = new DBClass();
         try {
-            DBClass db = new DBClass();
             uri = new URI("ws"+"://"+"45.86.47.12:27888");
         } catch (URISyntaxException e) {
             Log.d("----uri------",e.getMessage());
@@ -295,10 +295,13 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
             @Override
             public void onOpen(ServerHandshake serverHandshake) {
                 Log.d("Websocket", "Opened");
+                mWebSocketClientNotifications.send("{\"newUser\" : \"" + db.getHash(getBaseContext()) + "\"}");
             }
             @Override
             public void onMessage(String s) {
                 Log.d("stringS", s);
+                if(s.equals("pong"))
+                    isPongNot = true;
             }
             @Override
             public void onClose(int i, String s, boolean b) {
@@ -476,8 +479,8 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
             try {
                 RootOrderOne rootOrderOne = new Gson().fromJson(HttpApi.getId(url_order), RootOrderOne.class);
                 if(rootOrderOne.getActive().equals("0") || rootOrderOne.getActive().equals("4")) {
-                    startActivity(new Intent("com.example.taxi_full.RequestDriver"));
                     executor.shutdown();
+                    startActivity(new Intent("com.example.taxi_full.RequestDriver"));
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -499,13 +502,23 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
                     if (mWebSocketClient.getConnection().isOpen())
                         mWebSocketClient.send("{\"ping\" : \"" + hash + "\"}");
                 }
+                if(mWebSocketClientNotifications != null) {
+                    if (mWebSocketClientNotifications.getConnection().isOpen())
+                        mWebSocketClientNotifications.send("{\"ping\" : \"" + hash + "\"}");
+                }
                 isPong = false;
+                isPongNot = false;
                 try {
                     Thread.sleep(2000);
                     if(!isPong) {
                         if(mWebSocketClient.getConnection().isOpen())
                             mWebSocketClient.close();
                         connectToSocket();
+                    }
+                    if(!isPongNot) {
+                        if(mWebSocketClientNotifications.getConnection().isOpen())
+                            mWebSocketClientNotifications.close();
+                        connectToSocketNotifications();
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
