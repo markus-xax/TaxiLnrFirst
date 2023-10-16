@@ -1,11 +1,15 @@
 package com.example.taxi_full;
 
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.PointF;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
@@ -15,6 +19,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
@@ -22,6 +27,7 @@ import androidx.core.content.ContextCompat;
 
 import com.example.taxi_full.API.DBClass;
 import com.example.taxi_full.API.HttpApi;
+import com.example.taxi_full.API.StyleCard;
 import com.example.taxi_full.API.model.RootCars;
 import com.example.taxi_full.API.model.RootGeolocationRoom;
 import com.example.taxi_full.API.model.RootNotifications;
@@ -77,7 +83,10 @@ public class GoActivityUser extends AppCompatActivity implements UserLocationObj
 
     private WebSocketClient mWebSocketClient;
     private WebSocketClient mWebSocketClientNotifications;
+    //private WebSocketClient mWebSocketClientTime;
     //private final TCPSocket tcpSocket = new TCPSocket();
+    private static final String channelId = "just_random_string_395";
+    private static final int notifyId = 395;
     private String hash;
     private final DBClass dbClass = new DBClass();
     private final String URL_API_ORDERS_TREE = "http://45.86.47.12/api/ordersThree";
@@ -98,6 +107,7 @@ public class GoActivityUser extends AppCompatActivity implements UserLocationObj
     private PlacemarkMapObject placemarkMapObject;
     private final String URL_API = "http://45.86.47.12/api/orders";
     private String DistanceRoute, TimeRoute;
+    private String TimeRouteStart = "0 мин";
     private TextView time, time2, price;
     private final String URL_CARS = "http://45.86.47.12/api/cars";
     private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
@@ -129,6 +139,8 @@ public class GoActivityUser extends AppCompatActivity implements UserLocationObj
 
         drivingRouter = DirectionsFactory.getInstance().createDrivingRouter();
         mapObjects = mapView.getMap().getMapObjects().addCollection();
+
+        StyleCard.setMapStyle(mapView);
 
         TextView start = findViewById(R.id.start);
         TextView finish = findViewById(R.id.finish);
@@ -312,9 +324,11 @@ public class GoActivityUser extends AppCompatActivity implements UserLocationObj
             public void onOpen(ServerHandshake serverHandshake) {
                 Log.d("Websocket", "Opened");
                 mWebSocketClientNotifications.send("{\"newUser\" : \"" + db.getHash(getBaseContext()) + "\"}");
+                Log.d("блятва", "{\"newUser\" : \"" + db.getHash(getBaseContext()) + "\"}");
             }
             @Override
             public void onMessage(String s) {
+                Log.d("ассс", s);
                 if (s.equals("pong"))
                     isPongNot = true;
                 else {
@@ -322,20 +336,9 @@ public class GoActivityUser extends AppCompatActivity implements UserLocationObj
                     RootNotifications rootNotifications = new Gson().fromJson(s, RootNotifications.class);
                     //вывести уведомление
                     if (rootNotifications.getHash().equals(db.getHash(GoActivityUser.this))) {
-                        runOnUiThread(() -> {
-                            NotificationCompat.Builder builder =
-                                    new NotificationCompat.Builder(GoActivityUser.this)
-                                            .setSmallIcon(R.mipmap.ic_launcher)
-                                            .setContentTitle("Taxi")
-                                            .setContentText(rootNotifications.getNotifications());
-
-                            Notification notification = builder.build();
-
-                            NotificationManager notificationManager =
-                                    (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-                            notificationManager.notify(1, notification);
-                        });
+                        runOnUiThread(() -> sendNotification(rootNotifications.getNotifications()));
                     }
+                    timeRoute();
                 }
             }
             @Override
@@ -348,6 +351,43 @@ public class GoActivityUser extends AppCompatActivity implements UserLocationObj
             }
         };
         mWebSocketClientNotifications.connect();
+    }
+
+
+    private void sendNotification(String notify) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) createChannel();
+        Notification notification = buildNotification(notify);
+        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (manager != null) {
+            manager.cancel(notifyId);
+            manager.notify(notifyId, notification);
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private void createChannel() {
+        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        String name = "Notification channel name";
+        NotificationChannel channel = new NotificationChannel(channelId, name, NotificationManager.IMPORTANCE_HIGH);
+        channel.setDescription("Notification channel description");
+        if (manager != null)
+            manager.createNotificationChannel(channel);
+    }
+
+    private Notification buildNotification(String notify) {
+        NotificationCompat.Builder builder = notificationBuilder();
+        builder.setSmallIcon(R.drawable.ic_launcher_foreground)
+                .setContentTitle("Такси")
+                .setSubText(notify)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(notify))
+                .setPriority(NotificationCompat.PRIORITY_MAX);
+        return builder.build();
+    }
+
+    private NotificationCompat.Builder notificationBuilder() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+            return new NotificationCompat.Builder(this, channelId);
+        else return new NotificationCompat.Builder(this, channelId);
     }
 
     @Override
@@ -476,6 +516,10 @@ public class GoActivityUser extends AppCompatActivity implements UserLocationObj
             }
         }
         mapObjects.addPolyline(smallRoute);
+
+    }
+
+    private void timeRoute(){
         new Thread(()-> {
             while(true) {
                 runOnUiThread(()->{
@@ -494,6 +538,30 @@ public class GoActivityUser extends AppCompatActivity implements UserLocationObj
                     int tmi = Integer.parseInt(String.join("", tm));
                     tmi--;
                     TimeRoute = String.valueOf(tmi)+" мин";
+                }
+            }
+        }).start();
+    }
+
+    private void timeRouteStart()  {
+        new Thread(()-> {
+            while(true) {
+                runOnUiThread(()->{
+                    time.setText(TimeRouteStart);
+                    time2.setText(TimeRouteStart);
+                });
+                try {
+                    Thread.sleep(60000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                String[] tm = TimeRouteStart.split("\\D+");
+                if(Integer.parseInt(String.join("", tm)) == 0)
+                    break;
+                else {
+                    int tmi = Integer.parseInt(String.join("", tm));
+                    tmi--;
+                    TimeRouteStart = String.valueOf(tmi)+" мин";
                 }
             }
         }).start();

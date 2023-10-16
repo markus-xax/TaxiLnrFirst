@@ -20,6 +20,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.taxi_full.API.DBClass;
 import com.example.taxi_full.API.HttpApi;
 import com.example.taxi_full.API.MyLocationListener;
+import com.example.taxi_full.API.StyleCard;
 import com.example.taxi_full.API.TCPSocket;
 import com.example.taxi_full.API.model.RootGeolocationRoom;
 import com.example.taxi_full.API.model.RootOrderOne;
@@ -74,6 +75,7 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
 
     private WebSocketClient mWebSocketClient;
     private WebSocketClient mWebSocketClientNotifications;
+    //private WebSocketClient mWebSocketClientTime;
     //private final TCPSocket tcpSocket = new TCPSocket();
     private String hash;
     private DBClass dbClass = new DBClass();
@@ -93,6 +95,7 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
     private Point user = new Point();
     private PlacemarkMapObject placemarkMapObject;
     private final String URL_API = "http://45.86.47.12/api/orders";
+    private final String URL_API_TIME = "http://45.86.47.12/api/time";
     private String DistanceRoute,TimeRoute;
     private TextView time;
     private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
@@ -120,6 +123,8 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
 
         drivingRouter = DirectionsFactory.getInstance().createDrivingRouter();
         mapObjects = mapView.getMap().getMapObjects().addCollection();
+
+        StyleCard.setMapStyle(mapView);
 
         hash = dbClass.getHash(this);
 
