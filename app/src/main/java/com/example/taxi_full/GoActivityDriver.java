@@ -419,6 +419,10 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
         mapObjects.addPolyline(smallRoute);
 
         time.setText(TimeRoute);
+        new Thread(() -> {
+            String arr = "hash=" + hash + "&time=" + TimeRoute;
+            HttpApi.post(URL_API_TIME, arr);
+        }).start();
     }
 
     @Override

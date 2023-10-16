@@ -32,6 +32,7 @@ import com.example.taxi_full.API.model.RootCars;
 import com.example.taxi_full.API.model.RootGeolocationRoom;
 import com.example.taxi_full.API.model.RootNotifications;
 import com.example.taxi_full.API.model.RootOrderOne;
+import com.example.taxi_full.API.model.RootTime;
 import com.google.gson.Gson;
 import com.yandex.mapkit.MapKit;
 import com.yandex.mapkit.MapKitFactory;
@@ -91,6 +92,7 @@ public class GoActivityUser extends AppCompatActivity implements UserLocationObj
     private final DBClass dbClass = new DBClass();
     private final String URL_API_ORDERS_TREE = "http://45.86.47.12/api/ordersThree";
     private final String URL_API_USERS = "http://45.86.47.12/api/users";
+    private final String URL_API_TIME = "http://45.86.47.12/api/time";
     private RootOrderOne r;
     private UserLocationLayer userLocationLayer;
     private MapView mapView;
@@ -106,7 +108,7 @@ public class GoActivityUser extends AppCompatActivity implements UserLocationObj
     private Point driver = new Point();
     private PlacemarkMapObject placemarkMapObject;
     private final String URL_API = "http://45.86.47.12/api/orders";
-    private String DistanceRoute, TimeRoute;
+    private String DistanceRoute, TimeRoute, TimeRouteGSON;
     private String TimeRouteStart = "0 мин";
     private TextView time, time2, price;
     private final String URL_CARS = "http://45.86.47.12/api/cars";
@@ -324,7 +326,6 @@ public class GoActivityUser extends AppCompatActivity implements UserLocationObj
             public void onOpen(ServerHandshake serverHandshake) {
                 Log.d("Websocket", "Opened");
                 mWebSocketClientNotifications.send("{\"newUser\" : \"" + db.getHash(getBaseContext()) + "\"}");
-                Log.d("блятва", "{\"newUser\" : \"" + db.getHash(getBaseContext()) + "\"}");
             }
             @Override
             public void onMessage(String s) {
@@ -516,10 +517,90 @@ public class GoActivityUser extends AppCompatActivity implements UserLocationObj
             }
         }
         mapObjects.addPolyline(smallRoute);
+        new Thread(()->{
+            String hash = dbClass.getHash(GoActivityUser.this);
+            String url = URL_API +"/"+hash;
+            try {
+                RootOrderOne rootOrderOne = new Gson().fromJson(HttpApi.getId(url), RootOrderOne.class);
+                timeRouteStart(rootOrderOne.getHash_driver());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    private void getTimeRouteStartDriver(String hash){
+        new Thread(()->{
+            boolean flag = false;
+            while (true) {
+                try {
+                    if (!HttpApi.getId(URL_API_TIME + "/" + hash).equals("0") && TimeRoute != null) {
+                        if(!flag) {
+                            RootTime timeGson = new Gson().fromJson(HttpApi.getId(URL_API_TIME + "/" + hash), RootTime.class);
+                            TimeRouteGSON = timeGson.getTime();
+                            flag = true;
+                        }
+                        String[] tm = TimeRouteGSON.split("\\D+");
+                        String[] tmU = TimeRoute.split("\\D+");
+                        if(Integer.parseInt(String.join("", tm)) == 0 || Integer.parseInt(String.join("", tmU)) == 0)
+                            break;
+                        else {
+                            int tmi = Integer.parseInt(String.join("", tm));
+                            int tmiU = Integer.parseInt(String.join("", tmU));
+                            int timeStart = tmi-tmiU;
+                            if(timeStart > 0)
+                                TimeRouteStart = String.valueOf(timeStart) + " мин";
+                            runOnUiThread(()->{
+                                time.setText(TimeRouteStart);
+                                time2.setText(TimeRouteStart);
+                            });
+                            break;
+                        }
+                    }
+                    Thread.sleep(100);
+                } catch (IOException | InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
 
     }
 
-    private void timeRoute(){
+    private void timeRouteStart(String hash){
+        new Thread(()-> {
+            getTimeRouteStartDriver(hash);
+            while(true) {
+                if(!TimeRouteStart.equals("0 мин")) {
+                    runOnUiThread(() -> {
+                        time.setText(TimeRouteStart);
+                        time2.setText(TimeRouteStart);
+                    });
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    String[] tm = TimeRouteStart.split("\\D+");
+                    if (Integer.parseInt(String.join("", tm)) == 0)
+                        break;
+                    else {
+                        int tmi = Integer.parseInt(String.join("", tm));
+                        tmi--;
+                        TimeRouteStart = String.valueOf(tmi) + " мин";
+                    }
+                } else {
+                    try {
+                        Thread.sleep(60000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }).start();
+    }
+
+
+    private void timeRoute()  {
         new Thread(()-> {
             while(true) {
                 runOnUiThread(()->{
@@ -543,29 +624,6 @@ public class GoActivityUser extends AppCompatActivity implements UserLocationObj
         }).start();
     }
 
-    private void timeRouteStart()  {
-        new Thread(()-> {
-            while(true) {
-                runOnUiThread(()->{
-                    time.setText(TimeRouteStart);
-                    time2.setText(TimeRouteStart);
-                });
-                try {
-                    Thread.sleep(60000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                String[] tm = TimeRouteStart.split("\\D+");
-                if(Integer.parseInt(String.join("", tm)) == 0)
-                    break;
-                else {
-                    int tmi = Integer.parseInt(String.join("", tm));
-                    tmi--;
-                    TimeRouteStart = String.valueOf(tmi)+" мин";
-                }
-            }
-        }).start();
-    }
 
     @Override
     public void onDrivingRoutesError(@NonNull Error error) {
