@@ -3,7 +3,6 @@ package com.example.taxi_full;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -115,6 +114,7 @@ public class GoActivityUser extends AppCompatActivity implements UserLocationObj
     private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
     private DBClass DBClass = new DBClass();
     private boolean isPong, isPongNot;
+    private int c2 = Color.rgb(100, 200, 233);
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -411,7 +411,9 @@ public class GoActivityUser extends AppCompatActivity implements UserLocationObj
                         .setScale(1f)
         );
 
-        userLocationView.getAccuracyCircle().setFillColor(Color.BLUE & 0x99ffffff);
+
+
+        userLocationView.getAccuracyCircle().setFillColor(c2);
 
         new Thread(() -> {
             try {
@@ -423,7 +425,8 @@ public class GoActivityUser extends AppCompatActivity implements UserLocationObj
                         jsonGeometry.put("Latitude", userLocationView.getArrow().getGeometry().getLatitude());
                         jsonGeometry.put("user", r.getHash_driver());
                         //new Thread(()->{tcpSocket.send(jsonGeometry);}).start();
-                        mWebSocketClient.send(jsonGeometry.toString());
+                        if(mWebSocketClient.getConnection().isOpen())
+                            mWebSocketClient.send(jsonGeometry.toString());
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -452,7 +455,8 @@ public class GoActivityUser extends AppCompatActivity implements UserLocationObj
                         jsonGeometry.put("Longitude", userLocationView.getArrow().getGeometry().getLongitude());
                         jsonGeometry.put("Latitude", userLocationView.getArrow().getGeometry().getLatitude());
                         jsonGeometry.put("user", r.getHash_driver());
-                        mWebSocketClient.send(jsonGeometry.toString());
+                        if(mWebSocketClient.getConnection().isOpen())
+                            mWebSocketClient.send(jsonGeometry.toString());
                         //new Thread(()->{tcpSocket.send(jsonGeometry);}).start();
                     } catch (JSONException e) {
                         e.printStackTrace();

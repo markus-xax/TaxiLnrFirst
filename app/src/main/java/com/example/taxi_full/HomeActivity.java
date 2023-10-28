@@ -40,6 +40,7 @@ import com.example.taxi_full.API.DBClass;
 import com.example.taxi_full.API.HttpApi;
 import com.example.taxi_full.API.MyLocationListener;
 import com.example.taxi_full.API.StyleCard;
+import com.example.taxi_full.API.model.AdminDataPojo;
 import com.example.taxi_full.API.model.RootCars;
 import com.example.taxi_full.API.model.RootHomeWork;
 import com.example.taxi_full.API.model.RootOrderOne;
@@ -906,6 +907,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                 }
             }
         }
+
         int mathPrice = (int) Math.round(((smallRouteDistance * 40) / 1000));
         price = String.valueOf(mathPrice);
         if(routesCollection != null && !routesCollection.isEmpty())

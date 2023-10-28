@@ -20,6 +20,7 @@ public class RequestDriver extends AppCompatActivity {
     private final String URL_API = "http://45.86.47.12/api/rate/";
     private final String URL_API_USERS = "http://45.86.47.12/api/users";
     private final String URL_API_ORDERS_TREE = "http://45.86.47.12/api/ordersThree";
+    private final String URL_API_TIME = "http://45.86.47.12/api/time";
     private RootOrderOne r;
     private String hash;
     private DBClass dbClass = new DBClass();
@@ -44,17 +45,21 @@ public class RequestDriver extends AppCompatActivity {
         }).start();
 
         request.setOnClickListener(view -> {
-            String arg_active = "active=4";
-            String arg = "driver=1&rate="+ratingBar.getRating();
-            String url = URL_API_USERS +"/"+hash;
+            if(ratingBar.getRating() != 0) {
+                String arg_active = "active=4";
+                String arg = "driver=1&rate=" + ratingBar.getRating();
+                String url = URL_API_USERS + "/" + hash;
+                String urlTime = URL_API_TIME + "/" + hash;
 
-            new Thread(() -> {
-                if(HttpApi.put(url, arg_active) == HttpURLConnection.HTTP_OK) {
-                    if(HttpApi.put(URL_API+r.getHash_user(), arg) == HttpURLConnection.HTTP_OK) {
-                        startActivity(new Intent("com.example.taxi_full.HomeDriver"));
+                new Thread(() -> {
+                    if (HttpApi.put(url, arg_active) == HttpURLConnection.HTTP_OK) {
+                        if (HttpApi.put(URL_API + r.getHash_user(), arg) == HttpURLConnection.HTTP_OK) {
+                            if(HttpApi.put(urlTime, "") == HttpURLConnection.HTTP_OK)
+                                startActivity(new Intent("com.example.taxi_full.HomeDriver"));
+                        }
                     }
-                }
-            }).start();
+                }).start();
+            }
         });
 
     }

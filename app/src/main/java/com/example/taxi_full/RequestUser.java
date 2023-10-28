@@ -44,17 +44,19 @@ public class RequestUser extends AppCompatActivity {
         }).start();
 
         request.setOnClickListener(view -> {
-            String arg_active = "active=0";
-            String arg = "driver=0&rate="+ratingBar.getRating();
-            String url = URL_API_USERS +"/"+hash;
+            if(ratingBar.getRating() != 0) {
+                String arg_active = "active=0";
+                String arg = "driver=0&rate=" + ratingBar.getRating();
+                String url = URL_API_USERS + "/" + hash;
 
-            new Thread(() -> {
-                if(HttpApi.put(url, arg_active) == HttpURLConnection.HTTP_OK) {
-                    if(HttpApi.put(URL_API+r.getHash_driver(), arg) == HttpURLConnection.HTTP_OK) {
-                        startActivity(new Intent("com.example.taxi_full.Home"));
+                new Thread(() -> {
+                    if (HttpApi.put(url, arg_active) == HttpURLConnection.HTTP_OK) {
+                        if (HttpApi.put(URL_API + r.getHash_driver(), arg) == HttpURLConnection.HTTP_OK) {
+                            startActivity(new Intent("com.example.taxi_full.Home"));
+                        }
                     }
-                }
-            }).start();
+                }).start();
+            }
         });
 
 
