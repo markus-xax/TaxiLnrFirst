@@ -11,9 +11,13 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.PointF;
 import android.graphics.Typeface;
+import android.icu.text.Transliterator;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.Spannable;
+import android.text.SpannableString;
 import android.text.TextWatcher;
+import android.text.style.UnderlineSpan;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MotionEvent;
@@ -39,6 +43,7 @@ import androidx.navigation.ui.NavigationUI;
 import com.example.taxi_full.API.DBClass;
 import com.example.taxi_full.API.HttpApi;
 import com.example.taxi_full.API.MyLocationListener;
+import com.example.taxi_full.API.Price;
 import com.example.taxi_full.API.StyleCard;
 import com.example.taxi_full.API.model.AdminDataPojo;
 import com.example.taxi_full.API.model.RootCars;
@@ -126,6 +131,9 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
     private final String URL_CARS = "http://45.86.47.12/api/cars/";
     private final String URL_HOME_WORK = "http://45.86.47.12/api/homeWork/";
     private final String URL_API_ORDERS_TREE = "http://45.86.47.12/api/ordersThree/";
+    private final String Admin_Api = "http://45.86.47.12/api/admins/";
+    private final String URL_API_HISTORY = "http://45.86.47.12/api/ordersHistory";
+    public static final String CYRILLIC_TO_LATIN = "Cyrillic-Latin";
     private DBClass DBClass = new DBClass();
     private DBHelper dbHelper;
     private EditText start;
@@ -161,6 +169,9 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
     ImageView dollar_middle;
     ImageView dollar_business;
     private boolean isPong;
+    private String pr = "";
+    private int clasOrder = 1;
+    private double smallRouteDistance;
 
 
     @Override
@@ -222,44 +233,172 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         typeNal = findViewById(R.id.type_home_nal);
         typeOffNal = findViewById(R.id.type_home_offnal);
 
-        typeNal.setBackgroundColor(Color.LTGRAY);
         int lightBlue = ContextCompat.getColor(this, R.color.lightBlue);
+        typeOffNal.setBackgroundColor(Color.LTGRAY);
 
         typeNal.setOnClickListener(view-> new Thread(()-> {
             HttpApi.put(URL_API_ORDERS_TREE + DBClass.getHash(this), "type_pay=" + 1);
             runOnUiThread(()->{
-                typeNal.setBackgroundColor(Color.LTGRAY);
-                typeOffNal.setBackgroundColor(lightBlue);
+                typeNal.setBackgroundColor(lightBlue);
+                typeOffNal.setBackgroundColor(Color.LTGRAY);
             });
         }).start());
         typeOffNal.setOnClickListener(view-> new Thread(()-> {
             HttpApi.put(URL_API_ORDERS_TREE + DBClass.getHash(this), "type_pay=" + 2);
             runOnUiThread(()->{
-                typeOffNal.setBackgroundColor(Color.LTGRAY);
-                typeNal.setBackgroundColor(lightBlue);
+                typeOffNal.setBackgroundColor(lightBlue);
+                typeNal.setBackgroundColor(Color.LTGRAY);
             });
         }).start());
 
-        dollar_eco.setImageResource(R.drawable.dollar_black);
+        //dollar_eco.setImageResource(R.drawable.dollar_black);
 
         eco.setOnClickListener(view -> {
             Class = 1;
+            TextView tv=(TextView)findViewById(R.id.eco);
+            String s= String.valueOf(tv.getText());
+            SpannableString ss=new SpannableString(s);
+            ss.setSpan(new UnderlineSpan(), 0, s.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            tv.setText(ss);
+            TextView bus = findViewById(R.id.business);
+            TextView mid = findViewById(R.id.middle);
+            bus.setText("Бизнес");
+            mid.setText("Стандарт");
             dollar_eco.setImageResource(R.drawable.dollar_black);
             dollar_middle.setImageResource(R.drawable.dollar);
             dollar_business.setImageResource(R.drawable.dollar);
+            EditText cityEdit = findViewById(R.id.start_bottom);
+            String city = cityEdit.getText().toString().split(",", 2)[0];
+            Transliterator toLatinTrans = null;
+            String result = "";
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                toLatinTrans = Transliterator.getInstance(CYRILLIC_TO_LATIN);
+                result = toLatinTrans.transliterate(city);
+            }
+            String finalResult = "admin"+result;
+            Runnable getD = () -> {
+                try {
+                    if(!HttpApi.getId(Admin_Api + finalResult + "_"+"0"+"_"+"0").equals("0")) {
+                        AdminDataPojo data = new Gson().fromJson(HttpApi.getId(Admin_Api + finalResult + "_"+"0"+"_"+"0"), AdminDataPojo.class);
+                        pr = data.getPrice();
+                    } else {
+                        pr = "50";
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            };
+            Thread thread = new Thread(getD);
+            thread.start();
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            int mathPrice = (int) Math.round(((smallRouteDistance * Integer.parseInt(pr)) / 1000));
+            price = String.valueOf(mathPrice);
+            TextView e = findViewById(R.id.text_home);
+            e.setText("Стоимоть : " + price + "p");
+            new Thread(()-> HttpApi.put(URL_API_HISTORY, "hash="+DBClass.getHash(this)+"&class=1"+"&price="+price)).start();
         });
         middle.setOnClickListener(view -> {
             Class = 2;
             dollar_middle.setImageResource(R.drawable.dollar_black);
             dollar_eco.setImageResource(R.drawable.dollar);
             dollar_business.setImageResource(R.drawable.dollar);
+            TextView tv=(TextView)findViewById(R.id.middle);
+            String s= (String) tv.getText();
+            SpannableString ss=new SpannableString(s);
+            ss.setSpan(new UnderlineSpan(), 0, s.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            tv.setText(ss);
+            TextView eco = findViewById(R.id.eco);
+            TextView bus = findViewById(R.id.business);
+            eco.setText("Эконом");
+            bus.setText("Бизнес");
+            EditText cityEdit = findViewById(R.id.start_bottom);
+            String city = cityEdit.getText().toString().split(",", 2)[0];
+            Transliterator toLatinTrans = null;
+            String result = "";
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                toLatinTrans = Transliterator.getInstance(CYRILLIC_TO_LATIN);
+                result = toLatinTrans.transliterate(city);
+            }
+            String finalResult = "admin"+result;
+            Runnable getD = () -> {
+                try {
+                    if(!HttpApi.getId(Admin_Api + finalResult + "_"+"0"+"_"+"0").equals("0")) {
+                        AdminDataPojo data = new Gson().fromJson(HttpApi.getId(Admin_Api + finalResult + "_"+"0"+"_"+"0"), AdminDataPojo.class);
+                        pr = data.getPrice();
+                    } else {
+                        pr = "50";
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            };
+            Thread thread = new Thread(getD);
+            thread.start();
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            int mathPrice = (int) Math.round(((smallRouteDistance * Integer.parseInt(pr)) / 1000) * 1.5);
+            price = String.valueOf(mathPrice);
+            TextView e = findViewById(R.id.text_home);
+            e.setText("Стоимоть : " + price + "p");
+            new Thread(()->HttpApi.put(URL_API_HISTORY, "hash="+DBClass.getHash(this)+"&class=2"+"&price="+price)).start();
+
         });
         business.setOnClickListener(view -> {
             Class = 3;
             dollar_business.setImageResource(R.drawable.dollar_black);
             dollar_middle.setImageResource(R.drawable.dollar);
             dollar_eco.setImageResource(R.drawable.dollar);
+            EditText cityEdit = findViewById(R.id.start_bottom);
+            TextView tv=(TextView)findViewById(R.id.business);
+            String s= (String) tv.getText();
+            SpannableString ss=new SpannableString(s);
+            ss.setSpan(new UnderlineSpan(), 0, s.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            tv.setText(ss);
+            TextView eco = findViewById(R.id.eco);
+            TextView mid = findViewById(R.id.middle);
+            eco.setText("Эконом");
+            mid.setText("Стандарт");
+            String city = cityEdit.getText().toString().split(",", 2)[0];
+            Transliterator toLatinTrans = null;
+            String result = "";
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                toLatinTrans = Transliterator.getInstance(CYRILLIC_TO_LATIN);
+                result = toLatinTrans.transliterate(city);
+            }
+            String finalResult = "admin"+result;
+            Runnable getD = () -> {
+                try {
+                    if(!HttpApi.getId(Admin_Api + finalResult + "_"+"0"+"_"+"0").equals("0")) {
+                        AdminDataPojo data = new Gson().fromJson(HttpApi.getId(Admin_Api + finalResult + "_"+"0"+"_"+"0"), AdminDataPojo.class);
+                        pr = data.getPrice();
+                    } else {
+                        pr = "50";
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            };
+            Thread thread = new Thread(getD);
+            thread.start();
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            int mathPrice = (int) Math.round(((smallRouteDistance * Integer.parseInt(pr)) / 1000) * 2.5);
+            price = String.valueOf(mathPrice);
+            TextView e = findViewById(R.id.text_home);
+            e.setText("Стоимоть : " + price + "p");
+            new Thread(()->HttpApi.put(URL_API_HISTORY, "hash="+DBClass.getHash(this)+"&class=3"+"&price="+price)).start();
         });
+
 
         StartPointGeolocation();
         dragPoints();
@@ -275,8 +414,38 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         setPointsHomeWork();
         getClassOrder();
         isStartOrder();
+        getTypePay();
     }
 
+    private void getTypePay(){
+        new Thread(()->{
+            DBClass = new DBClass();
+            String hash = DBClass.getHash(HomeActivity.this);
+            String url = URL_API + "/" + hash;
+            int lightBlue = ContextCompat.getColor(this, R.color.lightBlue);
+            try {
+                if(!HttpApi.getId(url).equals("")) {
+                    RootOrderOne r = new Gson().fromJson(HttpApi.getId(url), RootOrderOne.class);
+                    if (r.getType_pay() != null) {
+                        if (!r.getType_pay().equals(""))
+                            if(r.getType_pay().equals("1")){
+                                runOnUiThread(()->{
+                                    typeNal.setBackgroundColor(lightBlue);
+                                    typeOffNal.setBackgroundColor(Color.LTGRAY);
+                                });
+                            }else {
+                                runOnUiThread(()->{
+                                    typeOffNal.setBackgroundColor(lightBlue);
+                                    typeNal.setBackgroundColor(Color.LTGRAY);
+                                });
+                            }
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -328,6 +497,32 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         if (ContextCompat.checkSelfPermission(this, "android.permission.INTERNET") != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{"android.permission.INTERNET"}, REQUEST_CODE_PERMISSION_INTERNET);
         }
+    }
+
+    private int getClasOrder(){
+        String url_order = URL_API + "/" + DBClass.getHash(this);
+        Runnable run = () -> {
+            try {
+                if(!HttpApi.getId(url_order).equals("")) {
+                    RootOrderOne r = new Gson().fromJson(HttpApi.getId(url_order), RootOrderOne.class);
+                    if (r.get_class() != null) {
+                        if (!r.get_class().equals(""))
+                            clasOrder = Integer.parseInt(r.get_class());
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        };
+        Thread t = new Thread(run);
+        t.start();
+        try {
+            t.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        return clasOrder;
     }
 
     @Override
@@ -446,8 +641,10 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                                         }).start();
                                     }
                                 });
-
-                                start.setText(start_string);
+                                String startSTR = start_string.replace("Россия","");
+                                startSTR = startSTR.replace("Украина", "");
+                                String finalStartSTR = startSTR;
+                                runOnUiThread(()->start.setText(finalStartSTR));
                             });
 
                         } else showToast(getString(R.string.unknown_error_message));
@@ -531,8 +728,10 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                                                         }).start();
                                                     }
                                                 });
-
-                                                finish.setText(finsh_string);
+                                                String startSTR = finsh_string.replace("Россия","");
+                                                startSTR = startSTR.replace("Украина", "");
+                                                String finalStartSTR = startSTR;
+                                                runOnUiThread(()->finish.setText(finalStartSTR));
                                             });
                                         } else showToast(getString(R.string.unknown_error_message));
                                         return;
@@ -709,7 +908,6 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
             private boolean flag = false;
             @Override
             public void onMessage(String s) {
-                Log.d("массаж2", s);
                 if(s.equals("ponggeo")) {
                     isPong = true;
                 } else {
@@ -892,7 +1090,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
 
     @Override
     public void onDrivingRoutes(@NonNull List<DrivingRoute> list) {
-        double smallRouteDistance = 0;
+        smallRouteDistance = 0;
         Polyline smallRoute = new Polyline();
         for (DrivingRoute route : list) {
             if (smallRouteDistance == 0) {
@@ -908,8 +1106,44 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
             }
         }
 
-        int mathPrice = (int) Math.round(((smallRouteDistance * 40) / 1000));
+        EditText cityEdit = findViewById(R.id.start_bottom);
+        String city = cityEdit.getText().toString().split(",", 2)[0];
+        Transliterator toLatinTrans = null;
+        String result = "";
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            toLatinTrans = Transliterator.getInstance(CYRILLIC_TO_LATIN);
+            result = toLatinTrans.transliterate(city);
+        }
+        String finalResult = "admin"+result;
+        Runnable getD = () -> {
+            try {
+                if(!HttpApi.getId(Admin_Api + finalResult + "_"+"0"+"_"+"0").equals("0")) {
+                    AdminDataPojo data = new Gson().fromJson(HttpApi.getId(Admin_Api + finalResult + "_"+"0"+"_"+"0"), AdminDataPojo.class);
+                    pr = data.getPrice();
+                } else {
+                    pr = "50";
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        };
+        Thread thread = new Thread(getD);
+        thread.start();
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        int mathPrice = 0;
+        if(getClasOrder() == 1)
+            mathPrice = (int) Math.round(((smallRouteDistance * Integer.parseInt(pr)) / 1000));
+        else if (getClasOrder() == 2)
+            mathPrice = (int) Math.round(((smallRouteDistance * Integer.parseInt(pr)) / 1000) * 1.5);
+        else
+            mathPrice = (int) Math.round(((smallRouteDistance * Integer.parseInt(pr)) / 1000) * 2.5);
         price = String.valueOf(mathPrice);
+        TextView e = findViewById(R.id.text_home);
+        e.setText("Стоимоть : " + price + "p");
         if(routesCollection != null && !routesCollection.isEmpty())
             routesCollection.get(0).setGeometry(smallRoute);
         else
@@ -975,6 +1209,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                     try {
                         String startFinishStringUK = rootGeolocation.getResponse().getGeoObjectCollection().getFeatureMember().get(0).getGeoObject().getDescription();
                         startFinishString = startFinishStringUK.replace("Украина", "");
+                        startFinishString = startFinishString.replace("Россия", "");
                     } catch (Exception ignored) {}
                 }
 
@@ -983,10 +1218,10 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                 runOnUiThread(() -> {
                     if(finalRootOrderOne == null || finalRootOrderOne.getStart_string().equals(""))
                         if (finalStartFinishString != null)
-                            start.setText(finalStartFinishString);
+                            runOnUiThread(() -> start.setText(finalStartFinishString));
                     if(finalRootOrderOne == null || finalRootOrderOne.getFinish_string().equals(""))
                         if (finalStartFinishString != null)
-                            finish.setText(finalStartFinishString);
+                            runOnUiThread(()->finish.setText(finalStartFinishString));
                 });
             } catch (IOException e) {
                 e.printStackTrace();
@@ -1199,7 +1434,10 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                     RootOrderOne rootOrderOne = new Gson().fromJson(HttpApi.getId(URL_API + "/" + hash), RootOrderOne.class);
                     runOnUiThread(() -> {
                         if (rootOrderOne.getStart() != null) {
-                            start.setText(rootOrderOne.getStart_string());
+                            String startSTR = rootOrderOne.getStart_string().replace("Россия","");
+                            startSTR = startSTR.replace("Украина", "");
+                            String finalStartSTR = startSTR;
+                            runOnUiThread(()->start.setText(finalStartSTR));
                             ArrayList<String> data = new ArrayList<>(Arrays.asList(rootOrderOne.getStart().split(",")));
                             Point start = new Point(Double.parseDouble(data.get(1)), Double.parseDouble(data.get(0)));
                             ROUTE_START_LOCATION = start;
@@ -1211,7 +1449,10 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                             }
                         }
                         if (!rootOrderOne.getFinish().equals("")) {
-                            finish.setText(rootOrderOne.getFinish_string());
+                            String startSTR = rootOrderOne.getFinish_string().replace("Россия","");
+                            startSTR = startSTR.replace("Украина", "");
+                            String finalStartSTR = startSTR;
+                            runOnUiThread(()->finish.setText(finalStartSTR));
                             ArrayList<String> dataEnd = new ArrayList<>(Arrays.asList(rootOrderOne.getFinish().split(",")));
                             Point finish = new Point(Double.parseDouble(dataEnd.get(1)), Double.parseDouble(dataEnd.get(0)));
                             ROUTE_END_LOCATION = finish;
@@ -1270,7 +1511,10 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                     if (start != null) {
                         HttpApi.post(URL_API, arr);
                         runOnUiThread(() -> point1 = mapObjects.addPlacemark(new Point(ROUTE_START_LOCATION.getLongitude(), ROUTE_START_LOCATION.getLatitude()), ImageProvider.fromResource(HomeActivity.this, R.drawable.pin)));
-                        this.start.setText(start);
+                        String startSS = start.replace("Россия","");
+                        startSS = startSS.replace("Украина", "");
+                        String finalStartSTR = startSS;
+                        runOnUiThread(()->this.start.setText(finalStartSTR));
                     }
                     Point p1 = new Point(MyLocationListener.imHere.getLatitude(), MyLocationListener.imHere.getLongitude());
                     ROUTE_START_LOCATION = p1;
@@ -1310,7 +1554,10 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
             DBClass db = new DBClass();
             try {
                 RootOrderOne rootOrderOne = new Gson().fromJson(HttpApi.getId(URL_API + "/" + db.getHash(this)), RootOrderOne.class);
-                runOnUiThread(()->finish.setText(rootOrderOne.getFinish_string()));
+                String startSTR = rootOrderOne.getFinish_string().replace("Россия","");
+                startSTR = startSTR.replace("Украина", "");
+                String finalStartSTR = startSTR;
+                runOnUiThread(()->finish.setText(finalStartSTR));
             } catch (IOException e){
                 e.printStackTrace();
             }
@@ -1537,12 +1784,43 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
     }
 
     private void setImageDollarClass(RootOrderOne rootOrderOne){
-        if(rootOrderOne.get_class().equals("1"))
+        if(rootOrderOne.get_class() != null) {
+            if (rootOrderOne.get_class().equals("1")) {
+                dollar_eco.setImageResource(R.drawable.dollar_black);
+                TextView tv=(TextView)findViewById(R.id.eco);
+                String s= (String) tv.getText();
+                SpannableString ss=new SpannableString(s);
+                ss.setSpan(new UnderlineSpan(), 0, s.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                tv.setText(ss);
+                TextView mid = findViewById(R.id.middle);
+                TextView bus = findViewById(R.id.business);
+                mid.setText("Стандарт");
+                bus.setText("Бизнес");
+            }else if (rootOrderOne.get_class().equals("2")) {
+                dollar_middle.setImageResource(R.drawable.dollar_black);
+                TextView tv=(TextView)findViewById(R.id.middle);
+                String s= (String) tv.getText();
+                SpannableString ss=new SpannableString(s);
+                ss.setSpan(new UnderlineSpan(), 0, s.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                tv.setText(ss);
+                TextView eco = findViewById(R.id.eco);
+                TextView bus = findViewById(R.id.business);
+                eco.setText("Эконом");
+                bus.setText("Бизнес");
+            } else if (rootOrderOne.get_class().equals("3")) {
+                dollar_business.setImageResource(R.drawable.dollar_black);
+                TextView tv=(TextView)findViewById(R.id.business);
+                String s= (String) tv.getText();
+                SpannableString ss=new SpannableString(s);
+                ss.setSpan(new UnderlineSpan(), 0, s.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                tv.setText(ss);
+                TextView eco = findViewById(R.id.eco);
+                TextView mid = findViewById(R.id.middle);
+                eco.setText("Эконом");
+                mid.setText("Стандарт");
+            }
+        } else
             dollar_eco.setImageResource(R.drawable.dollar_black);
-        else if (rootOrderOne.get_class().equals("2"))
-            dollar_middle.setImageResource(R.drawable.dollar_black);
-        else
-            dollar_business.setImageResource(R.drawable.dollar_black);
     }
 
     private void getClassOrder() {
