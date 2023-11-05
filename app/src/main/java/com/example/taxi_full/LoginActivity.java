@@ -17,13 +17,18 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.taxi_full.API.AdaptorHistory;
 import com.example.taxi_full.API.DBClass;
 import com.example.taxi_full.API.HttpApi;
 import com.example.taxi_full.API.Regx;
+import com.example.taxi_full.API.model.RootAllOrders;
 import com.example.taxi_full.API.model.RootUserOne;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.List;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -31,6 +36,7 @@ public class LoginActivity extends AppCompatActivity {
     private final String auth = "Продолжить";
     private String URL_API = "http://45.86.47.12/api/users/";
     private String URL_API_USER = "http://45.86.47.12/api/user/";
+
     private DBHelper dbHelper;
     SQLiteDatabase db;
     int DC;
@@ -122,17 +128,6 @@ public class LoginActivity extends AppCompatActivity {
         EditText phoneN = (EditText) findViewById(R.id.loginPhone);
 
         String url = URL_API + phoneN.getText().toString() + "/" + DC;
-        new Thread(() -> {
-            try {
-                RootUserOne root = new Gson().fromJson(HttpApi.getId(url), RootUserOne.class);
-                if ((phoneN.getText().toString()).equals(root.getPhoneTrim()) && hash.equals(root.getHash())) {
-                    startActivity(new Intent("com.example.taxi_full.Home"));
-                }
-            } catch (IOException e) {
-                Log.d("IOE-ex", e.getMessage());
-            }
-
-        }).start();
     }
 
     @Override

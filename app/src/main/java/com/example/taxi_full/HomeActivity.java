@@ -1196,6 +1196,11 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         DBClass DBClass = new DBClass();
         new Thread(()->{
             try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            try {
                 String url_order = URL_API + "/" + DBClass.getHash(this);
                 RootGeolocation rootGeolocation = null;
                 String startFinishString = null;

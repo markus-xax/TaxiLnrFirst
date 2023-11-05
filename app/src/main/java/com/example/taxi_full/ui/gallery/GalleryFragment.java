@@ -43,13 +43,11 @@ public class GalleryFragment extends Fragment {
         View root = binding.getRoot();
         list = root.findViewById(R.id.listViewHistory);
 
-        final TextView textView = binding.textGallery;
-        galleryViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
 
         new Thread(()->{
             DBClass db = new DBClass();
             String hash = db.getHash(getContext());
-            String url = URL_API + "/";
+            String url = URL_API + "/" + hash;
             try {
                 Type listType = new TypeToken<List<RootAllOrders>>() {
                 }.getType();
