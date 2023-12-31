@@ -8,6 +8,14 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <!--  общая телефония -->
+    <uses-feature android:name="android.hardware.telephony"/>
+
+    <!--  CDMA-телефония -->
+    <uses-feature android:name="android.hardware.telephony.cdma"/>
+
+    <!--  GSM-телефония -->
+    <uses-feature android:name="android.hardware.telephony.gsm"/>
 
     <application
         android:name=".TaxiApp"
@@ -96,7 +104,8 @@
         <activity
             android:name=".RegistrationActivity"
             android:exported="true"
-            android:theme="@style/Theme.Taxi_full.NoActionBar">
+            android:theme="@style/Theme.Taxi_full.NoActionBar"
+            android:windowSoftInputMode="adjustPan">
             <intent-filter>
 
                 <action android:name="com.example.taxi_full.Registration"/>
@@ -110,7 +119,8 @@
             android:name=".HomeActivity"
             android:exported="true"
             android:theme="@style/Theme.Taxi_full.NoActionBar"
-            android:noHistory="true">
+            android:noHistory="true"
+            android:windowSoftInputMode="adjustPan">
             <intent-filter>
 
                 <action android:name="com.example.taxi_full.Home"/>

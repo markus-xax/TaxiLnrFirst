@@ -5,6 +5,7 @@ import static java.lang.Thread.sleep;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PointF;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -24,6 +25,7 @@ import com.example.taxi_full.API.StyleCard;
 import com.example.taxi_full.API.TCPSocket;
 import com.example.taxi_full.API.model.RootGeolocationRoom;
 import com.example.taxi_full.API.model.RootOrderOne;
+import com.example.taxi_full.API.model.RootUserOne;
 import com.google.gson.Gson;
 import com.yandex.mapkit.MapKit;
 import com.yandex.mapkit.MapKitFactory;
@@ -128,8 +130,8 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
 
         hash = dbClass.getHash(this);
 
-        ImageButton msg = findViewById(R.id.msgD);
-        msg.setOnClickListener(view -> startActivity(new Intent("com.example.taxi_full.Chat")));
+//        ImageButton msg = findViewById(R.id.msgD);
+//        msg.setOnClickListener(view -> startActivity(new Intent("com.example.taxi_full.Chat")));
 
         TextView cord = findViewById(R.id.text_bottom);
         time = findViewById(R.id.time);
@@ -155,6 +157,7 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
                     }
 
                 });
+                telephone(rootOrderOne);
             } catch (Exception e){
                 e.printStackTrace();
             }
@@ -556,5 +559,23 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
                 }
             }
         }).start();
+    }
+
+    public void telephone(RootOrderOne rootOrderOne){
+        ImageButton tel = findViewById(R.id.tel);
+        new Thread(()->{
+            try {
+                RootUserOne root = new Gson().fromJson(HttpApi.getId("http://45.86.47.12/api/user/"+ rootOrderOne.getHash_driver() +"/1"), RootUserOne.class);
+                runOnUiThread(()->{
+                    tel.setOnClickListener(view->{
+                        Intent intent = new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + root.getPhone()));
+                        startActivity(intent);
+                    });
+                });
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }).start();
+
     }
 }

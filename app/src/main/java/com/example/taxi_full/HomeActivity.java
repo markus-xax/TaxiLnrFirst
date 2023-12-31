@@ -424,7 +424,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
             String url = URL_API + "/" + hash;
             int lightBlue = ContextCompat.getColor(this, R.color.lightBlue);
             try {
-                if(!HttpApi.getId(url).equals("")) {
+                if(!HttpApi.getId(url).equals("0")) {
                     RootOrderOne r = new Gson().fromJson(HttpApi.getId(url), RootOrderOne.class);
                     if (r.getType_pay() != null) {
                         if (!r.getType_pay().equals(""))

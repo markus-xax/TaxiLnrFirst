@@ -8,11 +8,13 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.PointF;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -32,6 +34,7 @@ import com.example.taxi_full.API.model.RootGeolocationRoom;
 import com.example.taxi_full.API.model.RootNotifications;
 import com.example.taxi_full.API.model.RootOrderOne;
 import com.example.taxi_full.API.model.RootTime;
+import com.example.taxi_full.API.model.RootUserOne;
 import com.google.gson.Gson;
 import com.yandex.mapkit.MapKit;
 import com.yandex.mapkit.MapKitFactory;
@@ -191,6 +194,7 @@ public class GoActivityUser extends AppCompatActivity implements UserLocationObj
                     mark2.setText(rootCars.getModel());
                     number.setText(rootCars.getNumber());
                 }
+                telephone(rootOrderOne);
               });
             } catch (Exception e){
                 e.printStackTrace();
@@ -724,5 +728,23 @@ public class GoActivityUser extends AppCompatActivity implements UserLocationObj
                 }
             }
         }).start();
+    }
+
+    public void telephone(RootOrderOne rootOrderOne){
+        ImageButton tel = findViewById(R.id.tel);
+        new Thread(()->{
+            try {
+                RootUserOne root = new Gson().fromJson(HttpApi.getId("http://45.86.47.12/api/user/"+ rootOrderOne.getHash_driver() +"/1"), RootUserOne.class);
+                runOnUiThread(()->{
+                    tel.setOnClickListener(view->{
+                        Intent intent = new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + root.getPhone()));
+                        startActivity(intent);
+                    });
+                });
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }).start();
+
     }
 }
