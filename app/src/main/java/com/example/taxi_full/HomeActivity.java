@@ -13,10 +13,8 @@ import android.graphics.PointF;
 import android.graphics.Typeface;
 import android.icu.text.Transliterator;
 import android.os.Bundle;
-import android.text.Editable;
 import android.text.Spannable;
 import android.text.SpannableString;
-import android.text.TextWatcher;
 import android.text.style.UnderlineSpan;
 import android.util.Log;
 import android.view.Menu;
@@ -43,7 +41,6 @@ import androidx.navigation.ui.NavigationUI;
 import com.example.taxi_full.API.DBClass;
 import com.example.taxi_full.API.HttpApi;
 import com.example.taxi_full.API.MyLocationListener;
-import com.example.taxi_full.API.Price;
 import com.example.taxi_full.API.StyleCard;
 import com.example.taxi_full.API.model.AdminDataPojo;
 import com.example.taxi_full.API.model.RootCars;
@@ -56,8 +53,6 @@ import com.example.taxi_full.databinding.ActivityMainBinding;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import com.yandex.mapkit.MapKit;
 import com.yandex.mapkit.MapKitFactory;
@@ -95,8 +90,6 @@ import com.yandex.runtime.network.RemoteError;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft_17;
 import org.java_websocket.handshake.ServerHandshake;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -1529,7 +1522,6 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
             }
         }).start();
     }
-
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent event) {
