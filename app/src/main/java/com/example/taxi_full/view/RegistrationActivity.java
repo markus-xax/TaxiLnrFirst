@@ -1,4 +1,4 @@
-package com.example.taxi_full;
+package com.example.taxi_full.view;
 
 import android.content.Context;
 import android.content.Intent;
@@ -17,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.taxi_full.API.HttpApi;
 import com.example.taxi_full.API.Regx;
+import com.example.taxi_full.R;
 
 import java.net.HttpURLConnection;
 

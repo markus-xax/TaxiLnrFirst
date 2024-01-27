@@ -2,8 +2,6 @@ package com.example.taxi_full.ui.home;
 
 import static android.content.Context.SENSOR_SERVICE;
 
-import static com.yandex.runtime.Runtime.getApplicationContext;
-
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -24,12 +22,10 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
-import com.example.taxi_full.API.AdaptorOrders;
+import com.example.taxi_full.API.adaptors.AdaptorOrders;
 import com.example.taxi_full.API.CityDriver;
 import com.example.taxi_full.API.DBClass;
 import com.example.taxi_full.API.HttpApi;
@@ -50,18 +46,13 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.channels.NotYetConnectedException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 public class HomeFragmentDriver extends Fragment {
 

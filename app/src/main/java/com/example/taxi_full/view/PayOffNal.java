@@ -1,4 +1,4 @@
-package com.example.taxi_full;
+package com.example.taxi_full.view;
 
 import static java.lang.Thread.sleep;
 
@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.taxi_full.API.DBClass;
 import com.example.taxi_full.API.HttpApi;
 import com.example.taxi_full.API.model.RootOrderOne;
+import com.example.taxi_full.R;
 import com.google.gson.Gson;
 
 import java.io.IOException;

@@ -1,4 +1,4 @@
-package com.example.taxi_full;
+package com.example.taxi_full.view;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -20,6 +20,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.example.taxi_full.API.HashGenerator;
+import com.example.taxi_full.R;
 
 public class Driver_ClientActivity extends AppCompatActivity {
 

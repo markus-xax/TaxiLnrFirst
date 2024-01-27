@@ -1,4 +1,4 @@
-package com.example.taxi_full;
+package com.example.taxi_full.view;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.taxi_full.API.DBClass;
 import com.example.taxi_full.API.HttpApi;
 import com.example.taxi_full.API.model.RootAllWallet;
+import com.example.taxi_full.R;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 

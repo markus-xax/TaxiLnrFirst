@@ -1,20 +1,13 @@
-package com.example.taxi_full;
+package com.example.taxi_full.view;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.taxi_full.API.DBClass;
-import com.example.taxi_full.API.HttpApi;
-import com.example.taxi_full.API.model.RootAllOrders;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-
-import java.lang.reflect.Type;
-import java.util.List;
+import com.example.taxi_full.R;
 
 public class SMSActivity extends AppCompatActivity {
     public DBClass dbClass;

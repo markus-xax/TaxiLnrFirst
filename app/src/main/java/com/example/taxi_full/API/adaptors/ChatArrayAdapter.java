@@ -1,4 +1,4 @@
-package com.example.taxi_full.API;
+package com.example.taxi_full.API.adaptors;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
+import com.example.taxi_full.API.ChatMessage;
 import com.example.taxi_full.R;
 
 import java.util.ArrayList;

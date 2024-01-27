@@ -1,4 +1,4 @@
-package com.example.taxi_full;
+package com.example.taxi_full.view.Home.driver;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -24,11 +24,12 @@ import androidx.navigation.ui.NavigationUI;
 
 import com.example.taxi_full.API.DBClass;
 import com.example.taxi_full.API.HttpApi;
-import com.example.taxi_full.API.StyleCard;
+import com.example.taxi_full.API.env.StyleCard;
 import com.example.taxi_full.API.model.RootAllOrders;
 import com.example.taxi_full.API.model.RootCars;
 import com.example.taxi_full.API.model.RootUserGeolocation;
 import com.example.taxi_full.API.model.RootUserOne;
+import com.example.taxi_full.R;
 import com.example.taxi_full.databinding.ActivityHomeDriverBinding;
 import com.google.android.material.navigation.NavigationView;
 import com.google.gson.Gson;
@@ -64,7 +65,7 @@ import java.util.List;
 import java.util.Locale;
 
 public class HomeActivityDriver extends AppCompatActivity implements UserLocationObjectListener {
-    //комит перед ростовом
+
     private static final int PERMISSIONS_REQUEST_FINE_LOCATION = 1;
     private AppBarConfiguration mAppBarConfiguration;
     private ActivityHomeDriverBinding binding;
@@ -404,7 +405,7 @@ public class HomeActivityDriver extends AppCompatActivity implements UserLocatio
             DBClass db = new DBClass();
             try{
                 if(!HttpApi.getId(URL_DEBT + "/" + db.getHash(this)).equals("[]")) {
-                    startActivity(new Intent("com.example.taxi_full.Debt"));
+                    startActivity(new Intent("com.example.taxi_full.view.Debt"));
                 }
             }catch (IOException e){
                 e.printStackTrace();

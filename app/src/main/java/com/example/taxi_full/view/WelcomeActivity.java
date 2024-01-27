@@ -1,17 +1,18 @@
-package com.example.taxi_full;
+package com.example.taxi_full.view;
 
 import android.content.Intent;
 import android.os.Bundle;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-public class MainActivity extends AppCompatActivity {
+import com.example.taxi_full.R;
 
+public class WelcomeActivity extends AppCompatActivity{
     @Override
-    public void onCreate(Bundle savedInstanceState)
-    {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.loading_screen);
+        setContentView(R.layout.welcone_screen);
 
         Thread logoTimer = new Thread()
         {
@@ -25,7 +26,7 @@ public class MainActivity extends AppCompatActivity {
                         sleep(100);
                         logoTimer = logoTimer +100;
                     };
-                    startActivity(new Intent("com.example.taxi_full.Welcome"));
+                    startActivity(new Intent("com.example.taxi_full.Driver_client"));
                 }
                 catch (InterruptedException e)
                 {

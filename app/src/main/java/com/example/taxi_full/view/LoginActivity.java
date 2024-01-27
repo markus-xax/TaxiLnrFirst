@@ -1,4 +1,4 @@
-package com.example.taxi_full;
+package com.example.taxi_full.view;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -17,18 +17,14 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.taxi_full.API.AdaptorHistory;
 import com.example.taxi_full.API.DBClass;
 import com.example.taxi_full.API.HttpApi;
 import com.example.taxi_full.API.Regx;
-import com.example.taxi_full.API.model.RootAllOrders;
 import com.example.taxi_full.API.model.RootUserOne;
+import com.example.taxi_full.R;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.List;
 
 public class LoginActivity extends AppCompatActivity {
 

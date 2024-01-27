@@ -13,7 +13,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
-import com.example.taxi_full.API.AdaptorWallet;
+import com.example.taxi_full.API.adaptors.AdaptorWallet;
 import com.example.taxi_full.API.DBClass;
 import com.example.taxi_full.API.HttpApi;
 import com.example.taxi_full.API.model.RootAllWallet;

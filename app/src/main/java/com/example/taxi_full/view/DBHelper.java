@@ -1,4 +1,4 @@
-package com.example.taxi_full;
+package com.example.taxi_full.view;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;

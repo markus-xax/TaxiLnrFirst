@@ -83,7 +83,7 @@ public class ProfileDriverFragment extends Fragment {
 
 
         imageButton.setOnClickListener(view -> {
-            startActivity(new Intent("com.example.taxi_full.AddCar"));
+            startActivity(new Intent("com.example.taxi_full.view.AddCar"));
         });
 
         ImageButton exit = root.findViewById(R.id.backProfileDriver);

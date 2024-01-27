@@ -1,4 +1,4 @@
-package com.example.taxi_full;
+package com.example.taxi_full.view.Home.user;
 
 import static android.os.SystemClock.sleep;
 
@@ -41,7 +41,8 @@ import androidx.navigation.ui.NavigationUI;
 import com.example.taxi_full.API.DBClass;
 import com.example.taxi_full.API.HttpApi;
 import com.example.taxi_full.API.MyLocationListener;
-import com.example.taxi_full.API.StyleCard;
+import com.example.taxi_full.API.env.StyleCard;
+import com.example.taxi_full.API.env.Env;
 import com.example.taxi_full.API.model.AdminDataPojo;
 import com.example.taxi_full.API.model.RootCars;
 import com.example.taxi_full.API.model.RootHomeWork;
@@ -49,6 +50,7 @@ import com.example.taxi_full.API.model.RootOrderOne;
 import com.example.taxi_full.API.model.RootUserGeolocation;
 import com.example.taxi_full.API.model.RootUserOne;
 import com.example.taxi_full.API.model.geocode.RootGeolocation;
+import com.example.taxi_full.R;
 import com.example.taxi_full.databinding.ActivityMainBinding;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
@@ -109,36 +111,20 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class HomeActivity extends AppCompatActivity implements UserLocationObjectListener, DrivingSession.DrivingRouteListener {
     private AppBarConfiguration mAppBarConfiguration;
     private ActivityMainBinding binding;
-    private static final String GEOCODER_API_KEY = "94c7a826-02a9-4847-b560-1699c2b7d751";
     private MapView mapView;
+    private static final String GEOCODER_API_KEY = "94c7a826-02a9-4847-b560-1699c2b7d751";
     private static final int REQUEST_CODE_PERMISSION_INTERNET = 1;
     private static final int PERMISSIONS_REQUEST_FINE_LOCATION = 1;
     private UserLocationLayer userLocationLayer;
-    private Point ROUTE_START_LOCATION = null;
-    private Point ROUTE_END_LOCATION = null;
+    private Point ROUTE_START_LOCATION, ROUTE_END_LOCATION = null;
     private MapObjectCollection mapObjects;
-    private final String URL_API = "http://45.86.47.12/api/orders";
-    private final String URL_API_DRAG = "http://45.86.47.12/api/drag";
-    private final String URL_API_USERS = "http://45.86.47.12/api/users";
-    private final String URL_API_USER = "http://45.86.47.12/api/user";
-    private final String URL_CARS = "http://45.86.47.12/api/cars/";
-    private final String URL_HOME_WORK = "http://45.86.47.12/api/homeWork/";
-    private final String URL_API_ORDERS_TREE = "http://45.86.47.12/api/ordersThree/";
-    private final String Admin_Api = "http://45.86.47.12/api/admins/";
-    private final String URL_API_HISTORY = "http://45.86.47.12/api/ordersHistory";
     public static final String CYRILLIC_TO_LATIN = "Cyrillic-Latin";
     private DBClass DBClass = new DBClass();
-    private DBHelper dbHelper;
-    private EditText start;
-    private EditText finish;
-    private String startString, start_string = null;
-    private String finishString, finsh_string = null;
-    private WebSocketClient mWebSocketClient;
-    private WebSocketClient mWebSocketClientButton;
-    java.util.Map<String, Object> geo = new HashMap<>();
+    private EditText start, finish;
+    private String finsh_string, start_string = null;
+    private WebSocketClient mWebSocketClient, mWebSocketClientButton;
     private final HashMap<String, HashMap<String, Object>> users = new HashMap<>();
     private HashMap<String, Integer> colorsCars = new HashMap<>();
-    private int Class = 1;
     private String distance, price = null;
     private DrivingSession drivingSession;
     private DrivingRouter drivingRouter;
@@ -146,24 +132,17 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
     private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
     private final ScheduledExecutorService executor2 = Executors.newScheduledThreadPool(1);
     private int countUserLocation = 0;
-    private List<PolylineMapObject> routesCollection = new ArrayList<>();
+    private final List<PolylineMapObject> routesCollection = new ArrayList<>();
     public List<RootUserGeolocation> posts = null;
     Dialog dialog;
     final int DIALOG = 1;
     private boolean dialogOrder = false;
-    TextView eco;
-    TextView middle;
-    TextView business;
-    Button typeNal;
-    Button typeOffNal;
-    ImageView home;
-    ImageView work;
-    ImageView dollar_eco;
-    ImageView dollar_middle;
-    ImageView dollar_business;
+    TextView eco, middle, business;
+    Button typeNal, typeOffNal;
+    ImageView home, work, dollar_eco, dollar_middle, dollar_business;
     private boolean isPong;
     private String pr = "";
-    private int clasOrder = 1;
+    private int Class, clasOrder = 1;
     private double smallRouteDistance;
 
 
@@ -211,7 +190,6 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         NavigationUI.setupWithNavController(navigationView, navController);
 
         connectToSocket();
-        dbHelper = new DBHelper(this);
 
         start = findViewById(R.id.start_bottom);
         finish = findViewById(R.id.finish_bottom);
@@ -230,21 +208,19 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         typeOffNal.setBackgroundColor(Color.LTGRAY);
 
         typeNal.setOnClickListener(view-> new Thread(()-> {
-            HttpApi.put(URL_API_ORDERS_TREE + DBClass.getHash(this), "type_pay=" + 1);
+            HttpApi.put(Env.URL_API_ORDERS_TREE + DBClass.getHash(this), "type_pay=" + 1);
             runOnUiThread(()->{
                 typeNal.setBackgroundColor(lightBlue);
                 typeOffNal.setBackgroundColor(Color.LTGRAY);
             });
         }).start());
         typeOffNal.setOnClickListener(view-> new Thread(()-> {
-            HttpApi.put(URL_API_ORDERS_TREE + DBClass.getHash(this), "type_pay=" + 2);
+            HttpApi.put(Env.URL_API_ORDERS_TREE + DBClass.getHash(this), "type_pay=" + 2);
             runOnUiThread(()->{
                 typeOffNal.setBackgroundColor(lightBlue);
                 typeNal.setBackgroundColor(Color.LTGRAY);
             });
         }).start());
-
-        //dollar_eco.setImageResource(R.drawable.dollar_black);
 
         eco.setOnClickListener(view -> {
             Class = 1;
@@ -271,8 +247,8 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
             String finalResult = "admin"+result;
             Runnable getD = () -> {
                 try {
-                    if(!HttpApi.getId(Admin_Api + finalResult + "_"+"0"+"_"+"0").equals("0")) {
-                        AdminDataPojo data = new Gson().fromJson(HttpApi.getId(Admin_Api + finalResult + "_"+"0"+"_"+"0"), AdminDataPojo.class);
+                    if(!HttpApi.getId(Env.URL_API_ADMIN + finalResult + "_"+"0"+"_"+"0").equals("0")) {
+                        AdminDataPojo data = new Gson().fromJson(HttpApi.getId(Env.URL_API_ADMIN + finalResult + "_"+"0"+"_"+"0"), AdminDataPojo.class);
                         pr = data.getPrice();
                     } else {
                         pr = "50";
@@ -292,7 +268,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
             price = String.valueOf(mathPrice);
             TextView e = findViewById(R.id.text_home);
             e.setText("Стоимоть : " + price + "p");
-            new Thread(()-> HttpApi.put(URL_API_HISTORY, "hash="+DBClass.getHash(this)+"&class=1"+"&price="+price)).start();
+            new Thread(()-> HttpApi.put(Env.URL_API_HISTORY, "hash="+DBClass.getHash(this)+"&class=1"+"&price="+price)).start();
         });
         middle.setOnClickListener(view -> {
             Class = 2;
@@ -319,8 +295,8 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
             String finalResult = "admin"+result;
             Runnable getD = () -> {
                 try {
-                    if(!HttpApi.getId(Admin_Api + finalResult + "_"+"0"+"_"+"0").equals("0")) {
-                        AdminDataPojo data = new Gson().fromJson(HttpApi.getId(Admin_Api + finalResult + "_"+"0"+"_"+"0"), AdminDataPojo.class);
+                    if(!HttpApi.getId(Env.URL_API_ADMIN + finalResult + "_"+"0"+"_"+"0").equals("0")) {
+                        AdminDataPojo data = new Gson().fromJson(HttpApi.getId(Env.URL_API_ADMIN + finalResult + "_"+"0"+"_"+"0"), AdminDataPojo.class);
                         pr = data.getPrice();
                     } else {
                         pr = "50";
@@ -340,7 +316,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
             price = String.valueOf(mathPrice);
             TextView e = findViewById(R.id.text_home);
             e.setText("Стоимоть : " + price + "p");
-            new Thread(()->HttpApi.put(URL_API_HISTORY, "hash="+DBClass.getHash(this)+"&class=2"+"&price="+price)).start();
+            new Thread(()->HttpApi.put(Env.URL_API_HISTORY, "hash="+DBClass.getHash(this)+"&class=2"+"&price="+price)).start();
 
         });
         business.setOnClickListener(view -> {
@@ -368,8 +344,8 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
             String finalResult = "admin"+result;
             Runnable getD = () -> {
                 try {
-                    if(!HttpApi.getId(Admin_Api + finalResult + "_"+"0"+"_"+"0").equals("0")) {
-                        AdminDataPojo data = new Gson().fromJson(HttpApi.getId(Admin_Api + finalResult + "_"+"0"+"_"+"0"), AdminDataPojo.class);
+                    if(!HttpApi.getId(Env.URL_API_ADMIN + finalResult + "_"+"0"+"_"+"0").equals("0")) {
+                        AdminDataPojo data = new Gson().fromJson(HttpApi.getId(Env.URL_API_ADMIN + finalResult + "_"+"0"+"_"+"0"), AdminDataPojo.class);
                         pr = data.getPrice();
                     } else {
                         pr = "50";
@@ -389,7 +365,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
             price = String.valueOf(mathPrice);
             TextView e = findViewById(R.id.text_home);
             e.setText("Стоимоть : " + price + "p");
-            new Thread(()->HttpApi.put(URL_API_HISTORY, "hash="+DBClass.getHash(this)+"&class=3"+"&price="+price)).start();
+            new Thread(()->HttpApi.put(Env.URL_API_HISTORY, "hash="+DBClass.getHash(this)+"&class=3"+"&price="+price)).start();
         });
 
 
@@ -414,7 +390,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         new Thread(()->{
             DBClass = new DBClass();
             String hash = DBClass.getHash(HomeActivity.this);
-            String url = URL_API + "/" + hash;
+            String url = Env.URL_API_ORDERS + "/" + hash;
             int lightBlue = ContextCompat.getColor(this, R.color.lightBlue);
             try {
                 if(!HttpApi.getId(url).equals("0")) {
@@ -493,7 +469,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
     }
 
     private int getClasOrder(){
-        String url_order = URL_API + "/" + DBClass.getHash(this);
+        String url_order = Env.URL_API_ORDERS + "/" + DBClass.getHash(this);
         Runnable run = () -> {
             try {
                 if(!HttpApi.getId(url_order).equals("")) {
@@ -554,7 +530,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         public void onMapTap(@NonNull Map map, @NonNull Point point) {
             DBClass = new DBClass();
             String hash = DBClass.getHash(HomeActivity.this);
-            String url = URL_API + "/" + hash;
+            String url = Env.URL_API_ORDERS + "/" + hash;
 
             new Thread(() -> {
                 Gson parser = new Gson();
@@ -570,7 +546,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
 
                         String arr = "hash_user=" + hash + "&hash_driver=" + "&start=" + point.getLongitude() + "," + point.getLatitude() + "&start_string=" + start_string;
 
-                        if (start_string != null && HttpApi.post(URL_API, arr) == HttpURLConnection.HTTP_OK) {
+                        if (start_string != null && HttpApi.post(Env.URL_API_ORDERS, arr) == HttpURLConnection.HTTP_OK) {
                             ROUTE_START_LOCATION = point;
 
                             runOnUiThread(() -> {
@@ -616,7 +592,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                                             while (true) {
                                                 if (distance != null & price != null) {
                                                     String arg = "start=" + p1.getLongitude() + "," + p1.getLatitude() + "&start_string=" + start_str + "&price=" + price + "&distance=" + distance;
-                                                    if (start_str != null && HttpApi.put(URL_API_DRAG + "/" + hash, arg) == HttpURLConnection.HTTP_OK) {
+                                                    if (start_str != null && HttpApi.put(Env.URL_API_DRAG + "/" + hash, arg) == HttpURLConnection.HTTP_OK) {
                                                         final String str = start_str;
                                                         EditText st = findViewById(R.id.start_bottom);
                                                         runOnUiThread(() -> {
@@ -705,7 +681,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                                                             while (true) {
                                                                 if (distance != null & price != null) {
                                                                     String arg = "finish=" + p2.getLongitude() + "," + p2.getLatitude() + "&finish_string=" + finish_str + "&price=" + price + "&distance=" + distance;
-                                                                    if (finish_str != null && HttpApi.put(URL_API + "/" + hash, arg) == HttpURLConnection.HTTP_OK) {
+                                                                    if (finish_str != null && HttpApi.put(Env.URL_API_ORDERS + "/" + hash, arg) == HttpURLConnection.HTTP_OK) {
                                                                         final String str = finish_str;
                                                                         EditText ft = findViewById(R.id.finish_bottom);
                                                                         runOnUiThread(() -> {
@@ -781,7 +757,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                 while (true) {
                     if (distance != null & price != null) {
                         String arg = "finish=" + p2.getLongitude() + "," + p2.getLatitude() + "&finish_string=" + finish_str + "&price=" + price + "&distance=" + distance;
-                        if (finish_str != null && HttpApi.put(URL_API + "/" + hash, arg) == HttpURLConnection.HTTP_OK) {
+                        if (finish_str != null && HttpApi.put(Env.URL_API_ORDERS + "/" + hash, arg) == HttpURLConnection.HTTP_OK) {
                             final String str = finish_str;
                             EditText ft = findViewById(R.id.finish_bottom);
                             runOnUiThread(() -> {
@@ -836,7 +812,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                 while (true) {
                     if (distance != null & price != null) {
                         String arg = "start=" + p1.getLongitude() + "," + p1.getLatitude() + "&start_string=" + start_str + "&price=" + price + "&distance=" + distance;
-                        if (start_str != null && HttpApi.put(URL_API_DRAG + "/" + hash, arg) == HttpURLConnection.HTTP_OK) {
+                        if (start_str != null && HttpApi.put(Env.URL_API_DRAG + "/" + hash, arg) == HttpURLConnection.HTTP_OK) {
                             final String str = start_str;
                             EditText st = findViewById(R.id.start_bottom);
                             runOnUiThread(() -> {
@@ -919,8 +895,8 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                                 users.put(posts.get(i).getHash(), arr);
                                 if (colorsCars != null && colorsCars.get(posts.get(i).getHash()) == null) {
                                     try {
-                                        if (!HttpApi.getId(URL_CARS + posts.get(i).getHash()).equals("0")) {
-                                            RootCars cars = new Gson().fromJson(HttpApi.getId(URL_CARS + posts.get(i).getHash()), RootCars.class);
+                                        if (!HttpApi.getId(Env.URL_CARS + posts.get(i).getHash()).equals("0")) {
+                                            RootCars cars = new Gson().fromJson(HttpApi.getId(Env.URL_CARS + posts.get(i).getHash()), RootCars.class);
                                             colorsCars.put(posts.get(i).getHash(), cars.getColor());
                                         }
                                     } catch (IOException e) {
@@ -1049,7 +1025,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
 
 
     private void RedirectToDriver() {
-        String url_order = URL_API + "/" + DBClass.getHash(this);
+        String url_order = Env.URL_API_ORDERS + "/" + DBClass.getHash(this);
         Runnable geoListener = () -> {
             try {
                 RootOrderOne r = new Gson().fromJson(HttpApi.getId(url_order), RootOrderOne.class);
@@ -1068,7 +1044,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
 
 
     private void RedirectToDriverFirst() {
-        String url_order = URL_API + "/" + DBClass.getHash(this);
+        String url_order = Env.URL_API_ORDERS + "/" + DBClass.getHash(this);
         new Thread(() -> {
             RootOrderOne r = null;
             try {if(!HttpApi.getId(url_order).equals("0")) {r = new Gson().fromJson(HttpApi.getId(url_order), RootOrderOne.class);}} catch (Exception e) {e.printStackTrace();}
@@ -1110,8 +1086,8 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         String finalResult = "admin"+result;
         Runnable getD = () -> {
             try {
-                if(!HttpApi.getId(Admin_Api + finalResult + "_"+"0"+"_"+"0").equals("0")) {
-                    AdminDataPojo data = new Gson().fromJson(HttpApi.getId(Admin_Api + finalResult + "_"+"0"+"_"+"0"), AdminDataPojo.class);
+                if(!HttpApi.getId(Env.URL_API_ADMIN + finalResult + "_"+"0"+"_"+"0").equals("0")) {
+                    AdminDataPojo data = new Gson().fromJson(HttpApi.getId(Env.URL_API_ADMIN + finalResult + "_"+"0"+"_"+"0"), AdminDataPojo.class);
                     pr = data.getPrice();
                 } else {
                     pr = "50";
@@ -1194,7 +1170,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                 e.printStackTrace();
             }
             try {
-                String url_order = URL_API + "/" + DBClass.getHash(this);
+                String url_order = Env.URL_API_ORDERS + "/" + DBClass.getHash(this);
                 RootGeolocation rootGeolocation = null;
                 String startFinishString = null;
                 RootOrderOne rootOrderOne = null;
@@ -1244,7 +1220,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                             submitRequest();
                         else {
                             String arr = "hash_user=" + hash + "&hash_driver=" + "&start=" + p1.getLongitude() + "," + p1.getLatitude() + "&start_string=" + start.getText();
-                            if (HttpApi.post(URL_API, arr) == HttpURLConnection.HTTP_OK) {
+                            if (HttpApi.post(Env.URL_API_ORDERS, arr) == HttpURLConnection.HTTP_OK) {
                                 runOnUiThread(()->{
                                     point1 = mapObjects.addPlacemark(p1,  ImageProvider.fromResource(HomeActivity.this, R.drawable.pin));
                                 });
@@ -1257,7 +1233,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                         while(true){
                             if(distance != null && price != null) {
                                 String arg = "start=" + p1.getLongitude() + "," + p1.getLatitude() + "&start_string=" + start.getText() + "&price=" + price + "&distance=" + distance;
-                                if (HttpApi.put(URL_API_DRAG + "/" + hash, arg) == HttpURLConnection.HTTP_OK) {
+                                if (HttpApi.put(Env.URL_API_DRAG + "/" + hash, arg) == HttpURLConnection.HTTP_OK) {
                                     runOnUiThread(()->{
                                         if(point1 != null)
                                             point1.setGeometry(p1);
@@ -1303,7 +1279,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                         while (true) {
                             if (distance != null && price != null) {
                                 String arg = "finish=" + p2.getLongitude() + "," + p2.getLatitude() + "&finish_string=" + finish.getText() + "&price=" + price + "&distance=" + distance;
-                                if (HttpApi.put(URL_API + "/" + hash, arg) == HttpURLConnection.HTTP_OK) {
+                                if (HttpApi.put(Env.URL_API_ORDERS + "/" + hash, arg) == HttpURLConnection.HTTP_OK) {
                                     runOnUiThread(()->{
                                         if(point2 != null)
                                             point2.setGeometry(p2);
@@ -1338,7 +1314,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         new Thread(() -> {
             DBClass dbClass = new DBClass();
             String hash = dbClass.getHash(this);
-            String url = URL_API_USER + "/" + hash + "/" + dbClass.getDC(this);
+            String url = Env.URL_API_USER + "/" + hash + "/" + dbClass.getDC(this);
             try {
                 RootUserOne rootUserOne = new Gson().fromJson(HttpApi.getId(url), RootUserOne.class);
                 runOnUiThread(() -> {
@@ -1362,7 +1338,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         goOff.setOnClickListener(view -> new Thread(() -> {
             DBClass db = new DBClass();
             String hash = db.getHash(HomeActivity.this);
-            String url = URL_API_USERS + "/" + hash;
+            String url = Env.URL_API_USERS + "/" + hash;
             String arg = "active=1" + "&class=" + Class;
             if (HttpApi.put(url, arg) == HttpURLConnection.HTTP_OK) {
                 connectToSocketButton();
@@ -1390,7 +1366,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                     if(dialogOrder) {
                         DBClass db = new DBClass();
                         String hash = db.getHash(HomeActivity.this);
-                        String url = URL_API_USERS + "/" + hash;
+                        String url = Env.URL_API_USERS + "/" + hash;
                         String arg = "active=2" + "&class=" + Class;
                         new Thread(() -> {
                             if (HttpApi.put(url, arg) == HttpURLConnection.HTTP_OK) {
@@ -1428,8 +1404,8 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
             DBClass db = new DBClass();
             String hash = db.getHash(HomeActivity.this);
             try {
-                if (!HttpApi.getId(URL_API + "/" + hash).equals("0")) {
-                    RootOrderOne rootOrderOne = new Gson().fromJson(HttpApi.getId(URL_API + "/" + hash), RootOrderOne.class);
+                if (!HttpApi.getId(Env.URL_API_ORDERS + "/" + hash).equals("0")) {
+                    RootOrderOne rootOrderOne = new Gson().fromJson(HttpApi.getId(Env.URL_API_ORDERS + "/" + hash), RootOrderOne.class);
                     runOnUiThread(() -> {
                         if (rootOrderOne.getStart() != null) {
                             String startSTR = rootOrderOne.getStart_string().replace("Россия","");
@@ -1474,8 +1450,8 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
             DBClass db = new DBClass();
             String hash = db.getHash(HomeActivity.this);
             try {
-                if (!HttpApi.getId(URL_API + "/" + hash).equals("0")) {
-                    RootOrderOne rootOrderOne = new Gson().fromJson(HttpApi.getId(URL_API + "/" + hash), RootOrderOne.class);
+                if (!HttpApi.getId(Env.URL_API_ORDERS + "/" + hash).equals("0")) {
+                    RootOrderOne rootOrderOne = new Gson().fromJson(HttpApi.getId(Env.URL_API_ORDERS + "/" + hash), RootOrderOne.class);
                     if (rootOrderOne.getActive().equals("2")) {
                         start.setEnabled(false);
                         finish.setEnabled(false);
@@ -1495,7 +1471,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
             String start;
             RootGeolocation rootGeocoder = null;
             try {
-                if (HttpApi.getId(URL_API + "/" + hash).equals("0")) {
+                if (HttpApi.getId(Env.URL_API_ORDERS + "/" + hash).equals("0")) {
                     Point p = new Point(MyLocationListener.imHere.getLongitude(), MyLocationListener.imHere.getLatitude());
                     ROUTE_START_LOCATION = p;
                     rootGeocoder = new Gson().fromJson(HttpApi.getId("https://geocode-maps.yandex.ru/1.x/?geocode=" + ROUTE_START_LOCATION.getLatitude() + "," + ROUTE_START_LOCATION.getLongitude() + "&apikey=" + GEOCODER_API_KEY + "&format=json&results=1&kind=house"), RootGeolocation.class);
@@ -1507,7 +1483,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                     }
                     String arr = "hash_user=" + hash + "&hash_driver=" + "&start=" + ROUTE_START_LOCATION.getLatitude() + "," + ROUTE_START_LOCATION.getLongitude() + "&start_string=" + start;
                     if (start != null) {
-                        HttpApi.post(URL_API, arr);
+                        HttpApi.post(Env.URL_API_ORDERS, arr);
                         runOnUiThread(() -> point1 = mapObjects.addPlacemark(new Point(ROUTE_START_LOCATION.getLongitude(), ROUTE_START_LOCATION.getLatitude()), ImageProvider.fromResource(HomeActivity.this, R.drawable.pin)));
                         String startSS = start.replace("Россия","");
                         startSS = startSS.replace("Украина", "");
@@ -1550,7 +1526,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         new Thread(()->{
             DBClass db = new DBClass();
             try {
-                RootOrderOne rootOrderOne = new Gson().fromJson(HttpApi.getId(URL_API + "/" + db.getHash(this)), RootOrderOne.class);
+                RootOrderOne rootOrderOne = new Gson().fromJson(HttpApi.getId(Env.URL_API_ORDERS + "/" + db.getHash(this)), RootOrderOne.class);
                 String startSTR = rootOrderOne.getFinish_string().replace("Россия","");
                 startSTR = startSTR.replace("Украина", "");
                 String finalStartSTR = startSTR;
@@ -1578,7 +1554,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                         Point p2 = new Point(Double.parseDouble(pos.get(1)), Double.parseDouble(pos.get(0)));
 
                         String arg = "home=" + home.getText() + "&pointHome=" + p2.getLongitude() + "," + p2.getLatitude() + "&hw=1";
-                        if (HttpApi.put(URL_HOME_WORK + hash, arg) == HttpURLConnection.HTTP_OK) {
+                        if (HttpApi.put(Env.URL_HOME_WORK + hash, arg) == HttpURLConnection.HTTP_OK) {
                             showToast("Успех");
                         }
                     } catch(IOException e){
@@ -1608,7 +1584,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                         Point p2 = new Point(Double.parseDouble(pos.get(1)), Double.parseDouble(pos.get(0)));
 
                         String arg = "work=" + work.getText() + "&pointWork=" + p2.getLongitude() + "," + p2.getLatitude() + "&hw=2";
-                        if (HttpApi.put(URL_HOME_WORK + hash, arg) == HttpURLConnection.HTTP_OK) {
+                        if (HttpApi.put(Env.URL_HOME_WORK + hash, arg) == HttpURLConnection.HTTP_OK) {
                             showToast("Успех");
                         }
                     } catch(IOException e){
@@ -1633,7 +1609,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         new Thread(() -> {
             if(checkHomeWork() != 0) {
                 try {
-                    RootHomeWork rootHomeWork = new Gson().fromJson(HttpApi.getId(URL_HOME_WORK + db.getHash(this)), RootHomeWork.class);
+                    RootHomeWork rootHomeWork = new Gson().fromJson(HttpApi.getId(Env.URL_HOME_WORK + db.getHash(this)), RootHomeWork.class);
                     runOnUiThread(() -> {
                         home.setText(rootHomeWork.getHome());
                         work.setText(rootHomeWork.getWork());
@@ -1649,14 +1625,14 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         new Thread(() -> {
             DBClass db = new DBClass();
             String arr = "hash=" + db.getHash(this);
-            HttpApi.post(URL_HOME_WORK, arr);
+            HttpApi.post(Env.URL_HOME_WORK, arr);
             loadHomeWorkText();
         }).start();
     }
 
     private int checkHomeWork(){
         DBClass db = new DBClass();
-        String url = URL_HOME_WORK + db.getHash(this);
+        String url = Env.URL_HOME_WORK + db.getHash(this);
         AtomicInteger check = new AtomicInteger();
         check.set(1);
         new Thread(()->{
@@ -1682,7 +1658,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
             DBClass db = new DBClass();
             try {
                 if(!homeEdit.getText().toString().equals("")) {
-                    RootHomeWork rootHomeWork = new Gson().fromJson(HttpApi.getId(URL_HOME_WORK + db.getHash(this)), RootHomeWork.class);
+                    RootHomeWork rootHomeWork = new Gson().fromJson(HttpApi.getId(Env.URL_HOME_WORK + db.getHash(this)), RootHomeWork.class);
                     ArrayList<String> data = new ArrayList<>(Arrays.asList(rootHomeWork.getPointHome().split(",")));
                     Point homeP = new Point(Double.parseDouble(data.get(1)), Double.parseDouble(data.get(0)));
                     ROUTE_END_LOCATION = homeP;
@@ -1691,7 +1667,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                     while (true) {
                         if (distance != null && price != null) {
                             String arg = "finish=" + homeP.getLongitude() + "," + homeP.getLatitude() + "&finish_string=" + homeEdit.getText() + "&price=" + price + "&distance=" + distance;
-                            if (HttpApi.put(URL_API + "/" + db.getHash(this), arg) == HttpURLConnection.HTTP_OK) {
+                            if (HttpApi.put(Env.URL_API_ORDERS + "/" + db.getHash(this), arg) == HttpURLConnection.HTTP_OK) {
                                 runOnUiThread(()->{
                                     if(point2 != null)
                                         point2.setGeometry(homeP);
@@ -1718,7 +1694,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
             DBClass db = new DBClass();
             try {
                 if(!workEdit.getText().toString().equals("")) {
-                    RootHomeWork rootHomeWork = new Gson().fromJson(HttpApi.getId(URL_HOME_WORK + db.getHash(this)), RootHomeWork.class);
+                    RootHomeWork rootHomeWork = new Gson().fromJson(HttpApi.getId(Env.URL_HOME_WORK + db.getHash(this)), RootHomeWork.class);
                     ArrayList<String> data = new ArrayList<>(Arrays.asList(rootHomeWork.getPointWork().split(",")));
                     Point workP = new Point(Double.parseDouble(data.get(1)), Double.parseDouble(data.get(0)));
                     ROUTE_END_LOCATION = workP;
@@ -1727,7 +1703,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                     while (true) {
                         if (distance != null && price != null) {
                             String arg = "finish=" + workP.getLongitude() + "," + workP.getLatitude() + "&finish_string=" + workEdit.getText() + "&price=" + price + "&distance=" + distance;
-                            if (HttpApi.put(URL_API + "/" + db.getHash(this), arg) == HttpURLConnection.HTTP_OK) {
+                            if (HttpApi.put(Env.URL_API_ORDERS + "/" + db.getHash(this), arg) == HttpURLConnection.HTTP_OK) {
                                 runOnUiThread(()->{
                                     if(point2 != null)
                                         point2.setGeometry(workP);
@@ -1825,8 +1801,8 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
             DBClass db = new DBClass();
             String hash = db.getHash(HomeActivity.this);
             try {
-                if (!HttpApi.getId(URL_API + "/" + hash).equals("0")) {
-                    RootOrderOne rootOrderOne = new Gson().fromJson(HttpApi.getId(URL_API + "/" + hash), RootOrderOne.class);
+                if (!HttpApi.getId(Env.URL_API_ORDERS + "/" + hash).equals("0")) {
+                    RootOrderOne rootOrderOne = new Gson().fromJson(HttpApi.getId(Env.URL_API_ORDERS + "/" + hash), RootOrderOne.class);
                     if (rootOrderOne.getActive().equals("2")) {
                         runOnUiThread(() -> {
                             HomeActivity.this.blockEditOrder();
@@ -1878,8 +1854,8 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
             DBClass db = new DBClass();
             String hash = db.getHash(HomeActivity.this);
             try {
-                if (!HttpApi.getId(URL_API + "/" + hash).equals("0")) {
-                    RootOrderOne rootOrderOne = new Gson().fromJson(HttpApi.getId(URL_API + "/" + hash), RootOrderOne.class);
+                if (!HttpApi.getId(Env.URL_API_ORDERS + "/" + hash).equals("0")) {
+                    RootOrderOne rootOrderOne = new Gson().fromJson(HttpApi.getId(Env.URL_API_ORDERS + "/" + hash), RootOrderOne.class);
                     if(rootOrderOne.getActive().equals("2")) {
                         runOnUiThread(()-> goOff.setVisibility(View.VISIBLE));
                         unGo();

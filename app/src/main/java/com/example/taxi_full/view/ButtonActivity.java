@@ -1,4 +1,4 @@
-package com.example.taxi_full;
+package com.example.taxi_full.view;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -15,14 +15,15 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.taxi_full.R;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 
-public class ButtonActivityDriver extends AppCompatActivity {
+public class ButtonActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        LinearLayout llBottomSheet = findViewById(R.id.bottom_sheet_go_driver);
+        LinearLayout llBottomSheet = findViewById(R.id.bottom_sheet);
         FrameLayout tp = findViewById(R.id.topPanel);
         Button button = findViewById(R.id.button);
         BottomSheetBehavior<LinearLayout> bottomSheetBehavior = BottomSheetBehavior.from(llBottomSheet);
@@ -70,3 +71,4 @@ public class ButtonActivityDriver extends AppCompatActivity {
         return ret;
     }
 }
+

@@ -1,4 +1,4 @@
-package com.example.taxi_full;
+package com.example.taxi_full.view;
 
 import android.content.Context;
 import android.content.Intent;
@@ -18,7 +18,7 @@ import android.widget.ListView;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.taxi_full.API.ChatArrayAdapter;
+import com.example.taxi_full.API.adaptors.ChatArrayAdapter;
 import com.example.taxi_full.API.ChatMessage;
 import com.example.taxi_full.API.DBClass;
 import com.example.taxi_full.API.HttpApi;
@@ -26,6 +26,7 @@ import com.example.taxi_full.API.TCPSocket;
 import com.example.taxi_full.API.model.RootChatRoom;
 import com.example.taxi_full.API.model.RootChats;
 import com.example.taxi_full.API.model.RootOrderOne;
+import com.example.taxi_full.R;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 

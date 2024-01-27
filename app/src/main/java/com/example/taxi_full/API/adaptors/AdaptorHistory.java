@@ -1,4 +1,4 @@
-package com.example.taxi_full.API;
+package com.example.taxi_full.API.adaptors;
 
 import android.content.Context;
 import android.view.LayoutInflater;

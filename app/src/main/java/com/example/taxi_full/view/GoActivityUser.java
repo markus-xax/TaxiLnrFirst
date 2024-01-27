@@ -1,4 +1,4 @@
-package com.example.taxi_full;
+package com.example.taxi_full.view;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -14,7 +14,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -28,13 +27,14 @@ import androidx.core.content.ContextCompat;
 
 import com.example.taxi_full.API.DBClass;
 import com.example.taxi_full.API.HttpApi;
-import com.example.taxi_full.API.StyleCard;
+import com.example.taxi_full.API.env.StyleCard;
 import com.example.taxi_full.API.model.RootCars;
 import com.example.taxi_full.API.model.RootGeolocationRoom;
 import com.example.taxi_full.API.model.RootNotifications;
 import com.example.taxi_full.API.model.RootOrderOne;
 import com.example.taxi_full.API.model.RootTime;
 import com.example.taxi_full.API.model.RootUserOne;
+import com.example.taxi_full.R;
 import com.google.gson.Gson;
 import com.yandex.mapkit.MapKit;
 import com.yandex.mapkit.MapKitFactory;

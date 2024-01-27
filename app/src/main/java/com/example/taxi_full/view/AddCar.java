@@ -1,4 +1,4 @@
-package com.example.taxi_full;
+package com.example.taxi_full.view;
 
 import android.content.Context;
 import android.content.Intent;
@@ -21,6 +21,7 @@ import com.example.taxi_full.API.DBClass;
 import com.example.taxi_full.API.HttpApi;
 import com.example.taxi_full.API.model.RootAllMarkCars;
 import com.example.taxi_full.API.model.RootAllModelCars;
+import com.example.taxi_full.R;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 

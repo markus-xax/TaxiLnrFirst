@@ -1,4 +1,4 @@
-package com.example.taxi_full.API;
+package com.example.taxi_full.API.adaptors;
 
 import android.content.Context;
 import android.content.Intent;
@@ -12,6 +12,9 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.example.taxi_full.API.CityDriver;
+import com.example.taxi_full.API.DBClass;
+import com.example.taxi_full.API.HttpApi;
 import com.example.taxi_full.API.model.RootOrderOne;
 import com.example.taxi_full.API.model.RootUserOne;
 import com.example.taxi_full.R;

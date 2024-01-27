@@ -19,7 +19,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.taxi_full.API.HttpApi;
 import com.example.taxi_full.API.model.RootUserOne;
-import com.example.taxi_full.DBHelper;
+import com.example.taxi_full.view.DBHelper;
 import com.example.taxi_full.R;
 import com.example.taxi_full.databinding.FragmrntProfileBinding;
 import com.google.gson.Gson;

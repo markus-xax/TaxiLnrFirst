@@ -1,4 +1,4 @@
-package com.example.taxi_full;
+package com.example.taxi_full.view;
 
 import static java.lang.Thread.sleep;
 
@@ -21,11 +21,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.taxi_full.API.DBClass;
 import com.example.taxi_full.API.HttpApi;
 import com.example.taxi_full.API.MyLocationListener;
-import com.example.taxi_full.API.StyleCard;
-import com.example.taxi_full.API.TCPSocket;
+import com.example.taxi_full.API.env.StyleCard;
 import com.example.taxi_full.API.model.RootGeolocationRoom;
 import com.example.taxi_full.API.model.RootOrderOne;
 import com.example.taxi_full.API.model.RootUserOne;
+import com.example.taxi_full.R;
 import com.google.gson.Gson;
 import com.yandex.mapkit.MapKit;
 import com.yandex.mapkit.MapKitFactory;
@@ -172,7 +172,7 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
             new Thread(()->{
                 if(HttpApi.put(url, arg) == HttpURLConnection.HTTP_OK) {
                     flagNew = true;
-                    startActivity(new Intent("com.example.taxi_full.RequestDriver"));
+                    startActivity(new Intent("com.example.taxi_full.view.RequestDriver"));
                     //вывод всплыувуающего окна
                 }
             }).start();
@@ -513,7 +513,7 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
                     RootOrderOne rootOrderOne = new Gson().fromJson(HttpApi.getId(url_order), RootOrderOne.class);
                     if (rootOrderOne.getActive().equals("0") || rootOrderOne.getActive().equals("4")) {
                         executor.shutdown();
-                        startActivity(new Intent("com.example.taxi_full.RequestDriver"));
+                        startActivity(new Intent("com.example.taxi_full.view.RequestDriver"));
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
