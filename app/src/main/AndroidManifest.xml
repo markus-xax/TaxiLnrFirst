@@ -50,7 +50,7 @@
             android:resource="@array/preloaded_fonts" />
 
         <activity
-            android:name=".view.WelcomeActivity"
+            android:name=".view.welcome.WelcomeActivity"
             android:exported="true"
             android:theme="@style/Theme.Taxi_full.NoActionBar">
         <intent-filter>
@@ -63,7 +63,7 @@
         </activity>
 
         <activity
-            android:name=".view.Driver_ClientActivity"
+            android:name=".view.auth.login.driver_client.DriverClientActivity"
             android:exported="true"
             android:theme="@style/Theme.Taxi_full.NoActionBar">
             <intent-filter>
@@ -76,7 +76,7 @@
         </activity>
 
         <activity
-            android:name=".view.LoginActivity"
+            android:name=".view.auth.login.LoginActivity"
             android:exported="true"
             android:theme="@style/Theme.Taxi_full.NoActionBar">
             <intent-filter>
@@ -89,7 +89,7 @@
         </activity>
 
         <activity
-            android:name=".view.SMSActivity"
+            android:name=".view.auth.login.sms.SMSActivity"
             android:exported="true"
             android:theme="@style/Theme.Taxi_full.NoActionBar">
             <intent-filter>
@@ -102,7 +102,7 @@
         </activity>
 
         <activity
-            android:name=".view.RegistrationActivity"
+            android:name=".view.auth.regestration.RegistrationActivity"
             android:exported="true"
             android:theme="@style/Theme.Taxi_full.NoActionBar"
             android:windowSoftInputMode="adjustPan">
@@ -116,7 +116,7 @@
         </activity>
 
         <activity
-            android:name=".view.Home.user.HomeActivity"
+            android:name=".view.home.user.HomeActivity"
             android:exported="true"
             android:theme="@style/Theme.Taxi_full.NoActionBar"
             android:noHistory="true"
@@ -132,7 +132,7 @@
 
         <activity
 
-            android:name=".view.Home.driver.HomeActivityDriver"
+            android:name=".view.home.driver.HomeActivityDriver"
             android:exported="true"
             android:theme="@style/Theme.Taxi_full.NoActionBar"
             android:noHistory="true">
@@ -145,7 +145,7 @@
             </intent-filter>
         </activity>
         
-        <activity android:name=".view.GoActivityDriver"
+        <activity android:name=".view.go.driver.GoActivityDriver"
             android:exported="true"
             android:theme="@style/Theme.Taxi_full.NoActionBar"
             android:noHistory="true"
@@ -159,7 +159,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".view.GoActivityUser"
+        <activity android:name=".view.go.user.GoActivityUser"
             android:exported="true"
             android:theme="@style/Theme.Taxi_full.NoActionBar"
             android:noHistory="true"
@@ -173,7 +173,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".view.AddCar"
+        <activity android:name=".view.cars.AddCar"
             android:exported="true"
             android:theme="@style/Theme.Taxi_full.NoActionBar">
             <intent-filter>
@@ -185,7 +185,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".view.RequestDriver"
+        <activity android:name=".view.review.driver.ReviewDriver"
             android:exported="true"
             android:theme="@style/Theme.Taxi_full.NoActionBar"
             android:noHistory="true">
@@ -198,7 +198,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".view.RequestUser"
+        <activity android:name=".view.review.user.ReviewUser"
             android:exported="true"
             android:theme="@style/Theme.Taxi_full.NoActionBar"
             android:noHistory="true">
@@ -211,7 +211,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".view.ChatActivity"
+        <activity android:name=".view.chat.ChatActivity"
         android:exported="true"
         android:theme="@style/Theme.Taxi_full.NoActionBar">
         <intent-filter>
@@ -223,7 +223,7 @@
         </intent-filter>
     </activity>
 
-        <activity android:name=".view.Debt"
+        <activity android:name=".view.debt.Debt"
             android:exported="true"
             android:theme="@style/Theme.Taxi_full.NoActionBar"
             android:noHistory="true">
@@ -236,7 +236,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".view.PayOffNal"
+        <activity android:name=".view.pay.cashless.PayOffNal"
             android:exported="true"
             android:theme="@style/Theme.Taxi_full.NoActionBar"
             android:noHistory="true">
@@ -249,7 +249,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".view.CardPaymentActivity"
+        <activity android:name=".view.pay.cashless.CardPaymentActivity"
             android:exported="true"
             android:theme="@style/Theme.Taxi_full.NoActionBar"
             android:noHistory="true">

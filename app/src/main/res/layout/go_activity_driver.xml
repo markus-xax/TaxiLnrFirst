@@ -6,7 +6,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:background="@color/white"
     tools:openDrawer="start"
-    tools:context=".view.ButtonActivityDriver"
+    tools:context=".ui.bottom.driver.BottomActivityDriver"
     android:keepScreenOn="true">
 
     <com.yandex.mapkit.mapview.MapView

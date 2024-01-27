@@ -4,8 +4,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
-import com.example.taxi_full.view.DBHelper;
-
 public class DBClass {
 
     public Cursor userCursor;

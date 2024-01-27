@@ -5,7 +5,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="#efefef"
     android:orientation="vertical"
-    tools:context=".view.ChatActivity"
+    tools:context=".view.chat.ChatActivity"
     android:backgroundTint="@color/white">
 
     <ImageButton
