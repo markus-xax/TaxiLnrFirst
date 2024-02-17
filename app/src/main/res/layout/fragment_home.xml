@@ -21,6 +21,8 @@
 
     </com.yandex.mapkit.mapview.MapView>
 
+    <include layout="@layout/load" android:id="@+id/loadId"/>
+
     <TextView
         android:id="@+id/text_home"
         android:layout_width="wrap_content"

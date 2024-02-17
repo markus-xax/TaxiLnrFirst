@@ -24,6 +24,7 @@ import androidx.navigation.ui.NavigationUI;
 
 import com.example.taxi_full.API.DBClass;
 import com.example.taxi_full.API.HttpApi;
+import com.example.taxi_full.API.env.Env;
 import com.example.taxi_full.API.env.StyleCard;
 import com.example.taxi_full.API.model.RootAllOrders;
 import com.example.taxi_full.API.model.RootCars;
@@ -69,8 +70,6 @@ public class HomeActivityDriver extends AppCompatActivity implements UserLocatio
     private static final int PERMISSIONS_REQUEST_FINE_LOCATION = 1;
     private AppBarConfiguration mAppBarConfiguration;
     private ActivityHomeDriverBinding binding;
-    private final String URL_API_USER = "http://45.86.47.12/api/user";
-    private final String URL_API = "http://45.86.47.12/api/order";
     private int finalCount_orders = 0;
     private MapView mapView;
     private UserLocationLayer userLocationLayer;
@@ -80,12 +79,10 @@ public class HomeActivityDriver extends AppCompatActivity implements UserLocatio
     private MapObjectCollection mapObjects;
     private int countUserLocation = 0;
     private HashMap<String, Integer> colorsCars = new HashMap<>();
-    private final String URL_CARS = "http://45.86.47.12/api/cars/";
-    public List<RootUserGeolocation> posts = null;
+    private List<RootUserGeolocation> posts = null;
     private int cc = 0;
     private String formatter = "";
     private int incomingDriver;
-    private final String URL_DEBT = "http://45.86.47.12/api/debt";
     private int debtInd = 0;
     Dialog dialog;
     final int DIALOG = 1;
@@ -102,7 +99,7 @@ public class HomeActivityDriver extends AppCompatActivity implements UserLocatio
 
         mapView = findViewById(R.id.mapviewHomeDriver);
         mapView.getMap().setRotateGesturesEnabled(false);
-        mapView.getMap().move(new CameraPosition(new Point(0, 0), 17, 0, 0));
+        mapView.getMap().move(new CameraPosition(new Point(0, 0), 14, 0, 0));
 
         requestLocationPermission();
 
@@ -112,13 +109,12 @@ public class HomeActivityDriver extends AppCompatActivity implements UserLocatio
         userLocationLayer.setVisible(true);
         userLocationLayer.setHeadingEnabled(true);
 
+
         userLocationLayer.setObjectListener(this);
         mapObjects = mapView.getMap().getMapObjects().addCollection();
 
         //Стили!!!
         StyleCard.setMapStyle(mapView);
-
-
 
         setSupportActionBar(binding.appBarMainDriver.toolbar);
         DrawerLayout drawer = binding.drawerLayout2;
@@ -146,7 +142,7 @@ public class HomeActivityDriver extends AppCompatActivity implements UserLocatio
         new Thread(()->{
             DBClass db = new DBClass();
             try {
-                if (HttpApi.getId(URL_CARS + db.getHash(this)).equals("0")) {
+                if (HttpApi.getId(Env.URL_CARS + db.getHash(this)).equals("0")) {
                         runOnUiThread(()-> showDialog(DIALOG));
                 }
             } catch (IOException e) {
@@ -212,10 +208,10 @@ public class HomeActivityDriver extends AppCompatActivity implements UserLocatio
 
     private void echoUserOrderText(){
         new Thread(()-> {
-            String url = URL_API + "/";
+            String url = Env.URL_API_ORDER + "/";
             DBClass = new DBClass();
             String hash = DBClass.getHash(this);
-            String url_user = URL_API_USER +"/"+hash+"/"+DBClass.getDC(this);
+            String url_user = Env.URL_API_USER +"/"+hash+"/"+DBClass.getDC(this);
             try {
                 RootUserOne rootUserOne = new Gson().fromJson(HttpApi.getId(url_user), RootUserOne.class);
                 if(!HttpApi.getId(url).equals("0")) {
@@ -249,7 +245,7 @@ public class HomeActivityDriver extends AppCompatActivity implements UserLocatio
                         if(rootUserOne.getRate() == null || rootUserOne.getRate().equals(""))
                             rate.setText("5");
                         else
-                            rate.setText(rootUserOne.getRate()); // ошибкаааа
+                            rate.setText(rootUserOne.getRate()+" ");
 
                         orders_count.setText(String.valueOf(finalCount_orders));
                         incoming_day.setText(String.valueOf(incomingDriver));
@@ -293,8 +289,8 @@ public class HomeActivityDriver extends AppCompatActivity implements UserLocatio
                                 users.put(posts.get(i).getHash(), arr);
                                 if (colorsCars != null && colorsCars.get(posts.get(i).getHash()) == null) {
                                     try {
-                                        if (!HttpApi.getId(URL_CARS + posts.get(i).getHash()).equals("0")) {
-                                            RootCars cars = new Gson().fromJson(HttpApi.getId(URL_CARS + posts.get(i).getHash()), RootCars.class);
+                                        if (!HttpApi.getId(Env.URL_CARS + posts.get(i).getHash()).equals("0")) {
+                                            RootCars cars = new Gson().fromJson(HttpApi.getId(Env.URL_CARS + posts.get(i).getHash()), RootCars.class);
                                             colorsCars.put(posts.get(i).getHash(), cars.getColor());
                                         }
                                     } catch (IOException e) {
@@ -404,7 +400,7 @@ public class HomeActivityDriver extends AppCompatActivity implements UserLocatio
         new Thread(()->{
             DBClass db = new DBClass();
             try{
-                if(!HttpApi.getId(URL_DEBT + "/" + db.getHash(this)).equals("[]")) {
+                if(!HttpApi.getId(Env.URL_DEBT + "/" + db.getHash(this)).equals("[]")) {
                     startActivity(new Intent("com.example.taxi_full.view.debt.Debt"));
                 }
             }catch (IOException e){

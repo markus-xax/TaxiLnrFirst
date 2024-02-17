@@ -25,11 +25,12 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
-import com.example.taxi_full.API.adaptors.AdaptorOrders;
 import com.example.taxi_full.API.CityDriver;
 import com.example.taxi_full.API.DBClass;
 import com.example.taxi_full.API.HttpApi;
 import com.example.taxi_full.API.MyLocationListener;
+import com.example.taxi_full.API.adaptors.AdaptorOrders;
+import com.example.taxi_full.API.env.Env;
 import com.example.taxi_full.API.model.RootAllOrders;
 import com.example.taxi_full.API.model.RootCars;
 import com.example.taxi_full.API.model.RootOrderOne;
@@ -62,7 +63,6 @@ public class HomeFragmentDriver extends Fragment {
     public int[] dataImg;
     public final String URL_API = "http://45.86.47.12/api/orders";
     public final String URL_API_CAR = "http://45.86.47.12/api/cars/";
-    private static final String GEOCODER_API_KEY = "94c7a826-02a9-4847-b560-1699c2b7d751";
     public DBClass DBClass = new DBClass();
     private WebSocketClient mWebSocketClient;
     private WebSocketClient mWebSocketClientGeo;
@@ -518,7 +518,7 @@ public class HomeFragmentDriver extends Fragment {
         if(CityDriver.city == null) {
             double lat = MyLocationListener.imHere.getLatitude();  // широта
             double lon = MyLocationListener.imHere.getLongitude(); // долгота
-            RootGeolocation rootGeoStart = new Gson().fromJson(HttpApi.getId("https://geocode-maps.yandex.ru/1.x/?geocode=" + lon + "," + lat + "&apikey=" + GEOCODER_API_KEY + "&format=json&results=1&kind=house"), RootGeolocation.class);
+            RootGeolocation rootGeoStart = new Gson().fromJson(HttpApi.getId("https://geocode-maps.yandex.ru/1.x/?geocode=" + lon + "," + lat + "&apikey=" + Env.GEOCODER_API_KEY + "&format=json&results=1&kind=house"), RootGeolocation.class);
             String MyStringUK = rootGeoStart.getResponse().getGeoObjectCollection().getFeatureMember().get(0).getGeoObject().getDescription();
             String MyStr = MyStringUK.replace("Украина", "");
             String[] f = MyStr.split(",");

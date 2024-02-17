@@ -15,6 +15,13 @@ public final class StyleCard {
             "            \"stylers\": {" +
             "                \"color\": \"#DADADA\"" +
             "            }" +
+            "        }," +
+            "        {" +
+            "            \"types\": \"polyline\"," +
+            "            \"elements\": \"label.text.fill\"," +
+            "            \"stylers\": {" +
+            "                \"color\": \"#4D4D4D\"" +
+            "            }" +
             "        }" +
             "    ]";
 

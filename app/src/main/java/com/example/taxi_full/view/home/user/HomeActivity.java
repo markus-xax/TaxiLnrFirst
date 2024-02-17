@@ -6,11 +6,9 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PointF;
 import android.graphics.Typeface;
-import android.icu.text.Transliterator;
 import android.os.Bundle;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -23,6 +21,7 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -46,10 +45,16 @@ import com.example.taxi_full.API.model.RootCars;
 import com.example.taxi_full.API.model.RootHomeWork;
 import com.example.taxi_full.API.model.RootOrderOne;
 import com.example.taxi_full.API.model.RootUserGeolocation;
-import com.example.taxi_full.API.model.RootUserOne;
 import com.example.taxi_full.API.model.geocode.RootGeolocation;
+import com.example.taxi_full.API.model.weather.RootWeather;
 import com.example.taxi_full.R;
 import com.example.taxi_full.databinding.ActivityMainBinding;
+import com.example.taxi_full.view.fetures.Price.MathPrice;
+import com.example.taxi_full.view.fetures.Toast.CustomToast;
+import com.example.taxi_full.view.home.user.anim.AnimHome;
+import com.example.taxi_full.view.home.user.bottom.Bottom;
+import com.example.taxi_full.view.home.user.core.API.CoreAPI;
+import com.example.taxi_full.view.home.user.core.maps.YMaps;
 import com.example.taxi_full.view.home.user.permissions.Permission;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
@@ -57,14 +62,10 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.yandex.mapkit.MapKit;
 import com.yandex.mapkit.MapKitFactory;
-import com.yandex.mapkit.RequestPoint;
-import com.yandex.mapkit.RequestPointType;
 import com.yandex.mapkit.directions.DirectionsFactory;
-import com.yandex.mapkit.directions.driving.DrivingOptions;
 import com.yandex.mapkit.directions.driving.DrivingRoute;
 import com.yandex.mapkit.directions.driving.DrivingRouter;
 import com.yandex.mapkit.directions.driving.DrivingSession;
-import com.yandex.mapkit.directions.driving.VehicleOptions;
 import com.yandex.mapkit.geometry.Point;
 import com.yandex.mapkit.geometry.Polyline;
 import com.yandex.mapkit.layers.ObjectEvent;
@@ -104,53 +105,80 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 
 public class HomeActivity extends AppCompatActivity implements UserLocationObjectListener, DrivingSession.DrivingRouteListener {
     private AppBarConfiguration mAppBarConfiguration;
     private ActivityMainBinding binding;
     private MapView mapView;
-    private static final String GEOCODER_API_KEY = "94c7a826-02a9-4847-b560-1699c2b7d751";
     private UserLocationLayer userLocationLayer;
     private Point ROUTE_START_LOCATION, ROUTE_END_LOCATION = null;
     private MapObjectCollection mapObjects;
     public static final String CYRILLIC_TO_LATIN = "Cyrillic-Latin";
     private DBClass DBClass = new DBClass();
-    private EditText start, finish;
-    private String finsh_string, start_string = null;
+    private EditText start, finish, homeEdit, workEdit;
+    private String finsh_string, start_string, distance, price, region = null;
     private WebSocketClient mWebSocketClient, mWebSocketClientButton;
     private final HashMap<String, HashMap<String, Object>> users = new HashMap<>();
     private HashMap<String, Integer> colorsCars = new HashMap<>();
-    private String distance, price = null;
     private DrivingSession drivingSession;
     private DrivingRouter drivingRouter;
     private PlacemarkMapObject point1, point2;
     private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
     private final ScheduledExecutorService executor2 = Executors.newScheduledThreadPool(1);
+    private final ScheduledExecutorService executor3 = Executors.newScheduledThreadPool(1);
     private int countUserLocation = 0;
     private final List<PolylineMapObject> routesCollection = new ArrayList<>();
     public List<RootUserGeolocation> posts = null;
-    Dialog dialog;
+    private Dialog dialog;
     final int DIALOG = 1;
     private boolean dialogOrder = false;
-    TextView eco, middle, business;
-    Button typeNal, typeOffNal;
+    private TextView eco, middle, business;
+    private Button typeNal, typeOffNal;
     ImageView home, work, dollar_eco, dollar_middle, dollar_business;
     private boolean isPong;
     private String pr = "";
     private int Class, clasOrder = 1;
     private double smallRouteDistance;
+    private final YMaps yMaps = new YMaps();
+    private final CustomToast customToast = new CustomToast();
+    private final AnimHome ah = new AnimHome();
+    private FrameLayout loadFrame;
+    private final CoreAPI core = new CoreAPI();
+    private final Bottom bottom = new Bottom();
+    private String weather, delivery, day;
+    private MathPrice math = new MathPrice();
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
-        Permission p = new Permission();
-        p.permissionInternet(this, this);
-        p.requestLocationPermission(this, this);
+        Permission permission = new Permission();
+        permission.start(this, this);
 
         DirectionsFactory.initialize(this);
+
+        Runnable getRegion = () -> {
+            DBClass = new DBClass();
+            String url = Env.URL_API_ORDERS + "/" + DBClass.getHash(this);
+            try {
+                if (!HttpApi.getId(url).equals("0")) {
+                    RootOrderOne r = new Gson().fromJson(HttpApi.getId(url), RootOrderOne.class);
+                    if(!r.getRegion().equals(""))
+                        region = r.getRegion();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        };
+
+        Thread reg = new Thread(getRegion);
+        reg.start();
+        try {
+            reg.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
         super.onCreate(savedInstanceState);
 
@@ -161,7 +189,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
 
         mapView = findViewById(R.id.mapview);
         mapView.getMap().setRotateGesturesEnabled(true);
-        mapView.getMap().move(new CameraPosition(new Point(0, 0), 16, 0, 0));
+        mapView.getMap().move(new CameraPosition(new Point(0, 0), 14, 0, 0));
 
         //Стили!!!
         StyleCard.setMapStyle(mapView);
@@ -190,219 +218,58 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
 
         connectToSocket();
 
-        start = findViewById(R.id.start_bottom);
-        finish = findViewById(R.id.finish_bottom);
-
-        eco = findViewById(R.id.eco);
-        middle = findViewById(R.id.middle);
-        business = findViewById(R.id.business);
-        dollar_eco = findViewById(R.id.dollar_eco);
-        dollar_middle = findViewById(R.id.dollar_middle);
-        dollar_business = findViewById(R.id.dollar_business);
-
-        typeNal = findViewById(R.id.type_home_nal);
-        typeOffNal = findViewById(R.id.type_home_offnal);
+        assign();
 
         int lightBlue = ContextCompat.getColor(this, R.color.lightBlue);
         typeOffNal.setBackgroundColor(Color.LTGRAY);
 
-        typeNal.setOnClickListener(view-> new Thread(()-> {
-            HttpApi.put(Env.URL_API_ORDERS_TREE + DBClass.getHash(this), "type_pay=" + 1);
-            runOnUiThread(()->{
-                typeNal.setBackgroundColor(lightBlue);
-                typeOffNal.setBackgroundColor(Color.LTGRAY);
-            });
-        }).start());
-        typeOffNal.setOnClickListener(view-> new Thread(()-> {
-            HttpApi.put(Env.URL_API_ORDERS_TREE + DBClass.getHash(this), "type_pay=" + 2);
-            runOnUiThread(()->{
-                typeOffNal.setBackgroundColor(lightBlue);
-                typeNal.setBackgroundColor(Color.LTGRAY);
-            });
-        }).start());
+        core.start(this, this,
+                dialogOrder, point1, point2, Class,
+                executor, executor2, start, finish,
+                eco, middle, business, typeNal, typeOffNal,
+                mWebSocketClientButton, dollar_eco, dollar_middle, dollar_business);
 
-        eco.setOnClickListener(view -> {
-            Class = 1;
-            TextView tv=(TextView)findViewById(R.id.eco);
-            String s= String.valueOf(tv.getText());
-            SpannableString ss=new SpannableString(s);
-            ss.setSpan(new UnderlineSpan(), 0, s.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            tv.setText(ss);
-            TextView bus = findViewById(R.id.business);
-            TextView mid = findViewById(R.id.middle);
-            bus.setText("Бизнес");
-            mid.setText("Стандарт");
-            dollar_eco.setImageResource(R.drawable.dollar_black);
-            dollar_middle.setImageResource(R.drawable.dollar);
-            dollar_business.setImageResource(R.drawable.dollar);
-            EditText cityEdit = findViewById(R.id.start_bottom);
-            String city = cityEdit.getText().toString().split(",", 2)[0];
-            Transliterator toLatinTrans = null;
-            String result = "";
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                toLatinTrans = Transliterator.getInstance(CYRILLIC_TO_LATIN);
-                result = toLatinTrans.transliterate(city);
-            }
-            String finalResult = "admin"+result;
-            Runnable getD = () -> {
-                try {
-                    if(!HttpApi.getId(Env.URL_API_ADMIN + finalResult + "_"+"0"+"_"+"0").equals("0")) {
-                        AdminDataPojo data = new Gson().fromJson(HttpApi.getId(Env.URL_API_ADMIN + finalResult + "_"+"0"+"_"+"0"), AdminDataPojo.class);
-                        pr = data.getPrice();
-                    } else {
-                        pr = "50";
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            };
-            Thread thread = new Thread(getD);
-            thread.start();
-            try {
-                thread.join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            int mathPrice = (int) Math.round(((smallRouteDistance * Integer.parseInt(pr)) / 1000));
-            price = String.valueOf(mathPrice);
-            TextView e = findViewById(R.id.text_home);
-            e.setText("Стоимоть : " + price + "p");
-            new Thread(()-> HttpApi.put(Env.URL_API_HISTORY, "hash="+DBClass.getHash(this)+"&class=1"+"&price="+price)).start();
-        });
-        middle.setOnClickListener(view -> {
-            Class = 2;
-            dollar_middle.setImageResource(R.drawable.dollar_black);
-            dollar_eco.setImageResource(R.drawable.dollar);
-            dollar_business.setImageResource(R.drawable.dollar);
-            TextView tv=(TextView)findViewById(R.id.middle);
-            String s= (String) tv.getText();
-            SpannableString ss=new SpannableString(s);
-            ss.setSpan(new UnderlineSpan(), 0, s.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            tv.setText(ss);
-            TextView eco = findViewById(R.id.eco);
-            TextView bus = findViewById(R.id.business);
-            eco.setText("Эконом");
-            bus.setText("Бизнес");
-            EditText cityEdit = findViewById(R.id.start_bottom);
-            String city = cityEdit.getText().toString().split(",", 2)[0];
-            Transliterator toLatinTrans = null;
-            String result = "";
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                toLatinTrans = Transliterator.getInstance(CYRILLIC_TO_LATIN);
-                result = toLatinTrans.transliterate(city);
-            }
-            String finalResult = "admin"+result;
-            Runnable getD = () -> {
-                try {
-                    if(!HttpApi.getId(Env.URL_API_ADMIN + finalResult + "_"+"0"+"_"+"0").equals("0")) {
-                        AdminDataPojo data = new Gson().fromJson(HttpApi.getId(Env.URL_API_ADMIN + finalResult + "_"+"0"+"_"+"0"), AdminDataPojo.class);
-                        pr = data.getPrice();
-                    } else {
-                        pr = "50";
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            };
-            Thread thread = new Thread(getD);
-            thread.start();
-            try {
-                thread.join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            int mathPrice = (int) Math.round(((smallRouteDistance * Integer.parseInt(pr)) / 1000) * 1.5);
-            price = String.valueOf(mathPrice);
-            TextView e = findViewById(R.id.text_home);
-            e.setText("Стоимоть : " + price + "p");
-            new Thread(()->HttpApi.put(Env.URL_API_HISTORY, "hash="+DBClass.getHash(this)+"&class=2"+"&price="+price)).start();
+        go();
+        unGo();
 
-        });
-        business.setOnClickListener(view -> {
-            Class = 3;
-            dollar_business.setImageResource(R.drawable.dollar_black);
-            dollar_middle.setImageResource(R.drawable.dollar);
-            dollar_eco.setImageResource(R.drawable.dollar);
-            EditText cityEdit = findViewById(R.id.start_bottom);
-            TextView tv=(TextView)findViewById(R.id.business);
-            String s= (String) tv.getText();
-            SpannableString ss=new SpannableString(s);
-            ss.setSpan(new UnderlineSpan(), 0, s.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            tv.setText(ss);
-            TextView eco = findViewById(R.id.eco);
-            TextView mid = findViewById(R.id.middle);
-            eco.setText("Эконом");
-            mid.setText("Стандарт");
-            String city = cityEdit.getText().toString().split(",", 2)[0];
-            Transliterator toLatinTrans = null;
-            String result = "";
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                toLatinTrans = Transliterator.getInstance(CYRILLIC_TO_LATIN);
-                result = toLatinTrans.transliterate(city);
-            }
-            String finalResult = "admin"+result;
-            Runnable getD = () -> {
-                try {
-                    if(!HttpApi.getId(Env.URL_API_ADMIN + finalResult + "_"+"0"+"_"+"0").equals("0")) {
-                        AdminDataPojo data = new Gson().fromJson(HttpApi.getId(Env.URL_API_ADMIN + finalResult + "_"+"0"+"_"+"0"), AdminDataPojo.class);
-                        pr = data.getPrice();
-                    } else {
-                        pr = "50";
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            };
-            Thread thread = new Thread(getD);
-            thread.start();
-            try {
-                thread.join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            int mathPrice = (int) Math.round(((smallRouteDistance * Integer.parseInt(pr)) / 1000) * 2.5);
-            price = String.valueOf(mathPrice);
-            TextView e = findViewById(R.id.text_home);
-            e.setText("Стоимоть : " + price + "p");
-            new Thread(()->HttpApi.put(Env.URL_API_HISTORY, "hash="+DBClass.getHash(this)+"&class=3"+"&price="+price)).start();
-        });
+        homeEdit = findViewById(R.id.home);
+        workEdit = findViewById(R.id.work);
 
+        bottom.start(start, finish, this, this,
+                homeEdit, workEdit,
+                point1, point2, Class, eco, middle, business,
+                typeNal, typeOffNal, mWebSocketClientButton, lightBlue);
+
+        ah.hide(HomeActivity.this, loadFrame);
 
         StartPointGeolocation();
         dragPoints();
-        go();
-        unGo();
-        echoTextMenu();
         startEdit();
         finishEdit();
-        EditTextLocked();
-        bottomEditStartFinishPoint();
         startCheck();
-        addHomeWorkBottom();
         setPointsHomeWork();
-        getClassOrder();
-        isStartOrder();
         getTypePay();
+
     }
 
-    private void getTypePay(){
-        new Thread(()->{
+    private void getTypePay() {
+        new Thread(() -> {
             DBClass = new DBClass();
             String hash = DBClass.getHash(HomeActivity.this);
             String url = Env.URL_API_ORDERS + "/" + hash;
             int lightBlue = ContextCompat.getColor(this, R.color.lightBlue);
             try {
-                if(!HttpApi.getId(url).equals("0")) {
+                if (!HttpApi.getId(url).equals("0")) {
                     RootOrderOne r = new Gson().fromJson(HttpApi.getId(url), RootOrderOne.class);
                     if (r.getType_pay() != null) {
                         if (!r.getType_pay().equals(""))
-                            if(r.getType_pay().equals("1")){
-                                runOnUiThread(()->{
+                            if (r.getType_pay().equals("1")) {
+                                runOnUiThread(() -> {
                                     typeNal.setBackgroundColor(lightBlue);
                                     typeOffNal.setBackgroundColor(Color.LTGRAY);
                                 });
-                            }else {
-                                runOnUiThread(()->{
+                            } else {
+                                runOnUiThread(() -> {
                                     typeOffNal.setBackgroundColor(lightBlue);
                                     typeNal.setBackgroundColor(Color.LTGRAY);
                                 });
@@ -440,8 +307,9 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         super.onStart();
         MapKitFactory.getInstance().onStart();
         mapView.onStart();
+        CoreAPI core = new CoreAPI();
         try {
-            RedirectToDriverFirst();
+            core.RedirectToDriverFirst(this, this);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -455,11 +323,11 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         super.onDestroy();
     }
 
-    private int getClasOrder(){
+    private int getClasOrder() {
         String url_order = Env.URL_API_ORDERS + "/" + DBClass.getHash(this);
         Runnable run = () -> {
             try {
-                if(!HttpApi.getId(url_order).equals("")) {
+                if (!HttpApi.getId(url_order).equals("")) {
                     RootOrderOne r = new Gson().fromJson(HttpApi.getId(url_order), RootOrderOne.class);
                     if (r.get_class() != null) {
                         if (!r.get_class().equals(""))
@@ -485,8 +353,8 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
     public void onObjectAdded(UserLocationView userLocationView) {
 
         userLocationLayer.setAnchor(
-                new PointF((float)(mapView.getWidth() * 0.5), (float)(mapView.getHeight() * 0.5)),
-                new PointF((float)(mapView.getWidth() * 0.5), (float)(mapView.getHeight() * 0.83)));
+                new PointF((float) (mapView.getWidth() * 0.5), (float) (mapView.getHeight() * 0.5)),
+                new PointF((float) (mapView.getWidth() * 0.5), (float) (mapView.getHeight() * 0.83)));
 
         userLocationView.getArrow().setIcon(ImageProvider.fromResource(this, R.drawable.user_location));
 
@@ -506,13 +374,13 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
     @Override
     public void onObjectUpdated(UserLocationView view, ObjectEvent event) {
         ++countUserLocation;
-        if(countUserLocation > 2) {
+        if (countUserLocation > 2) {
             if (userLocationLayer.isAnchorEnabled())
                 userLocationLayer.resetAnchor();
         }
     }
 
-    private final InputListener il = new InputListener() {
+    public final InputListener il = new InputListener() {
         @Override
         public void onMapTap(@NonNull Map map, @NonNull Point point) {
             DBClass = new DBClass();
@@ -523,15 +391,16 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                 Gson parser = new Gson();
                 try {
                     if (HttpApi.getId(url).equals("0")) {
-                        RootGeolocation rootGeoStart = new Gson().fromJson(HttpApi.getId("https://geocode-maps.yandex.ru/1.x/?geocode=" + point.getLongitude() + "," + point.getLatitude() + "&apikey=" + GEOCODER_API_KEY + "&format=json&results=1&kind=house"), RootGeolocation.class);
+                        RootGeolocation rootGeoStart = new Gson().fromJson(HttpApi.getId("https://geocode-maps.yandex.ru/1.x/?geocode=" + point.getLongitude() + "," + point.getLatitude() + "&apikey=" + Env.GEOCODER_API_KEY + "&format=json&results=1&kind=house"), RootGeolocation.class);
                         try {
                             String start_stringUK = rootGeoStart.getResponse().getGeoObjectCollection().getFeatureMember().get(0).getGeoObject().getDescription() + rootGeoStart.getResponse().getGeoObjectCollection().getFeatureMember().get(0).getGeoObject().getName();
-                            start_string = start_stringUK.replace("Украина","");
+                            start_string = start_stringUK.replace("Украина", "");
+                            region = rootGeoStart.getResponse().getGeoObjectCollection().getFeatureMember().get(0).getGeoObject().getMetaDataProperty().getGeocoderMetaData().getAddress().getComponents().get(2).getName();
                         } catch (Exception e) {
                             start_string = null;
                         }
 
-                        String arr = "hash_user=" + hash + "&hash_driver=" + "&start=" + point.getLongitude() + "," + point.getLatitude() + "&start_string=" + start_string;
+                        String arr = "hash_user=" + hash + "&hash_driver=" + "&start=" + point.getLongitude() + "," + point.getLatitude() + "&start_string=" + start_string + "&region=" + region;
 
                         if (start_string != null && HttpApi.post(Env.URL_API_ORDERS, arr) == HttpURLConnection.HTTP_OK) {
                             ROUTE_START_LOCATION = point;
@@ -558,27 +427,28 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                                         Point p1 = new Point(point1.getGeometry().getLatitude(), point1.getGeometry().getLongitude());
                                         ROUTE_START_LOCATION = p1;
                                         if (ROUTE_END_LOCATION != null)
-                                            submitRequest();
+                                            yMaps.submitRequest(HomeActivity.this, ROUTE_START_LOCATION, ROUTE_END_LOCATION, drivingRouter);
                                         else
-                                            showToast("Пожалуйста, поставте вторую точку!");
+                                            customToast.showToast(HomeActivity.this, HomeActivity.this, "Пожалуйста, поставте вторую точку!");
 
                                         new Thread(() -> {
                                             String start_str = null;
                                             RootGeolocation rootGeoStart = null;
                                             try {
-                                                rootGeoStart = new Gson().fromJson(HttpApi.getId("https://geocode-maps.yandex.ru/1.x/?geocode=" + p1.getLongitude() + "," + p1.getLatitude() + "&apikey=" + GEOCODER_API_KEY + "&format=json&results=1&kind=house"), RootGeolocation.class);
+                                                rootGeoStart = new Gson().fromJson(HttpApi.getId("https://geocode-maps.yandex.ru/1.x/?geocode=" + p1.getLongitude() + "," + p1.getLatitude() + "&apikey=" + Env.GEOCODER_API_KEY + "&format=json&results=1&kind=house"), RootGeolocation.class);
                                             } catch (IOException e) {
                                                 e.printStackTrace();
                                             }
                                             try {
                                                 String start_strUK = rootGeoStart.getResponse().getGeoObjectCollection().getFeatureMember().get(0).getGeoObject().getDescription() + rootGeoStart.getResponse().getGeoObjectCollection().getFeatureMember().get(0).getGeoObject().getName();
-                                                start_str = start_strUK.replace("Украина","");
+                                                start_str = start_strUK.replace("Украина", "");
+                                                region = rootGeoStart.getResponse().getGeoObjectCollection().getFeatureMember().get(0).getGeoObject().getMetaDataProperty().getGeocoderMetaData().getAddress().getComponents().get(2).getName();
                                             } catch (Exception e) {
                                                 e.printStackTrace();
                                             }
                                             while (true) {
                                                 if (distance != null & price != null) {
-                                                    String arg = "start=" + p1.getLongitude() + "," + p1.getLatitude() + "&start_string=" + start_str + "&price=" + price + "&distance=" + distance;
+                                                    String arg = "start=" + p1.getLongitude() + "," + p1.getLatitude() + "&start_string=" + start_str + "&price=" + price + "&distance=" + distance + "&region=" + region ;
                                                     if (start_str != null && HttpApi.put(Env.URL_API_DRAG + "/" + hash, arg) == HttpURLConnection.HTTP_OK) {
                                                         final String str = start_str;
                                                         EditText st = findViewById(R.id.start_bottom);
@@ -586,7 +456,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                                                             st.setText(str);
                                                         });
                                                     } else
-                                                        showToast(getString(R.string.unknown_error_message));
+                                                        customToast.showToast(HomeActivity.this, HomeActivity.this, getString(R.string.unknown_error_message));
 
                                                     price = null;
                                                     distance = null;
@@ -597,13 +467,14 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                                         }).start();
                                     }
                                 });
-                                String startSTR = start_string.replace("Россия","");
+                                String startSTR = start_string.replace("Россия", "");
                                 startSTR = startSTR.replace("Украина", "");
                                 String finalStartSTR = startSTR;
-                                runOnUiThread(()->start.setText(finalStartSTR));
+                                runOnUiThread(() -> start.setText(finalStartSTR));
                             });
 
-                        } else showToast(getString(R.string.unknown_error_message));
+                        } else
+                            customToast.showToast(HomeActivity.this, HomeActivity.this, getString(R.string.unknown_error_message));
 
                     } else {
                         RootOrderOne root = parser.fromJson(HttpApi.getId(url), RootOrderOne.class);
@@ -612,21 +483,23 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
 
                             if (root.getFinish().equals("")) {
 
-                                RootGeolocation rootGeoStart = new Gson().fromJson(HttpApi.getId("https://geocode-maps.yandex.ru/1.x/?geocode=" + point.getLongitude() + "," + point.getLatitude() + "&apikey=" + GEOCODER_API_KEY + "&format=json&results=1&kind=house"), RootGeolocation.class);
+                                runOnUiThread(() -> ah.start(HomeActivity.this, loadFrame));
+
+                                RootGeolocation rootGeoStart = new Gson().fromJson(HttpApi.getId("https://geocode-maps.yandex.ru/1.x/?geocode=" + point.getLongitude() + "," + point.getLatitude() + "&apikey=" + Env.GEOCODER_API_KEY + "&format=json&results=1&kind=house"), RootGeolocation.class);
                                 try {
                                     String finish_stringUK = rootGeoStart.getResponse().getGeoObjectCollection().getFeatureMember().get(0).getGeoObject().getDescription() + rootGeoStart.getResponse().getGeoObjectCollection().getFeatureMember().get(0).getGeoObject().getName();
-                                    finsh_string = finish_stringUK.replace("Украина","");
+                                    finsh_string = finish_stringUK.replace("Украина", "");
                                 } catch (Exception e) {
                                     finsh_string = null;
                                 }
                                 ROUTE_END_LOCATION = point;
-                                submitRequest();
+                                yMaps.submitRequest(HomeActivity.this, ROUTE_START_LOCATION, ROUTE_END_LOCATION, drivingRouter);
                                 while (true) {
                                     if (distance != null & price != null) {
                                         String arg = "finish=" + point.getLongitude() + "," + point.getLatitude() + "&finish_string=" + finsh_string + "&price=" + price + "&distance=" + distance;
                                         if (finsh_string != null && HttpApi.put(url, arg) == HttpURLConnection.HTTP_OK) {
                                             runOnUiThread(() -> {
-                                                //перемещение финица
+                                                runOnUiThread(() -> ah.hide(HomeActivity.this, loadFrame));
                                                 point2 = mapObjects.addPlacemark(ROUTE_END_LOCATION, ImageProvider.fromResource(HomeActivity.this, R.drawable.finish));
 
                                                 point2.setDraggable(true);
@@ -647,21 +520,21 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                                                         ROUTE_END_LOCATION = p2;
 
                                                         if (ROUTE_START_LOCATION != null)
-                                                            submitRequest();
+                                                            yMaps.submitRequest(HomeActivity.this, ROUTE_START_LOCATION, ROUTE_END_LOCATION, drivingRouter);
                                                         else
-                                                            showToast("Пожалуйста, поставте вторую точку");
+                                                            customToast.showToast(HomeActivity.this, HomeActivity.this, "Пожалуйста, поставте вторую точку");
 
                                                         new Thread(() -> {
                                                             String finish_str = null;
                                                             RootGeolocation rootGeoStart = null;
                                                             try {
-                                                                rootGeoStart = new Gson().fromJson(HttpApi.getId("https://geocode-maps.yandex.ru/1.x/?geocode=" + p2.getLongitude() + "," + p2.getLatitude() + "&apikey=" + GEOCODER_API_KEY + "&format=json&results=1&kind=house"), RootGeolocation.class);
+                                                                rootGeoStart = new Gson().fromJson(HttpApi.getId("https://geocode-maps.yandex.ru/1.x/?geocode=" + p2.getLongitude() + "," + p2.getLatitude() + "&apikey=" + Env.GEOCODER_API_KEY + "&format=json&results=1&kind=house"), RootGeolocation.class);
                                                             } catch (IOException e) {
                                                                 e.printStackTrace();
                                                             }
                                                             try {
                                                                 String finish_strUK = rootGeoStart.getResponse().getGeoObjectCollection().getFeatureMember().get(0).getGeoObject().getDescription() + rootGeoStart.getResponse().getGeoObjectCollection().getFeatureMember().get(0).getGeoObject().getName();
-                                                                finish_str = finish_strUK.replace("Украина","");
+                                                                finish_str = finish_strUK.replace("Украина", "");
                                                             } catch (Exception e) {
                                                                 finish_str = null;
                                                             }
@@ -675,7 +548,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                                                                             ft.setText(str);
                                                                         });
                                                                     } else
-                                                                        showToast(getString(R.string.unknown_error_message));
+                                                                        customToast.showToast(HomeActivity.this, HomeActivity.this, getString(R.string.unknown_error_message));
                                                                     price = null;
                                                                     distance = null;
                                                                     return;
@@ -684,12 +557,15 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                                                         }).start();
                                                     }
                                                 });
-                                                String startSTR = finsh_string.replace("Россия","");
+                                                String startSTR = finsh_string.replace("Россия", "");
                                                 startSTR = startSTR.replace("Украина", "");
                                                 String finalStartSTR = startSTR;
-                                                runOnUiThread(()->finish.setText(finalStartSTR));
+                                                runOnUiThread(() -> finish.setText(finalStartSTR));
                                             });
-                                        } else showToast(getString(R.string.unknown_error_message));
+                                        } else {
+                                            runOnUiThread(() -> ah.hide(HomeActivity.this, loadFrame));
+                                            customToast.showToast(HomeActivity.this, HomeActivity.this, getString(R.string.unknown_error_message));
+                                        }
                                         return;
                                     }
                                 }
@@ -709,7 +585,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         }
     };
 
-    private final MapObjectDragListener dragFinish = new MapObjectDragListener() {
+    public final MapObjectDragListener dragFinish = new MapObjectDragListener() {
         @Override
         public void onMapObjectDragStart(@NonNull MapObject mapObject) {
 
@@ -722,22 +598,23 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
 
         @Override
         public void onMapObjectDragEnd(@NonNull MapObject mapObject) {
+            runOnUiThread(() -> ah.start(HomeActivity.this, loadFrame));
             DBClass db = new DBClass();
             String hash = db.getHash(HomeActivity.this);
             Point p2 = new Point(point2.getGeometry().getLatitude(), point2.getGeometry().getLongitude());
             ROUTE_END_LOCATION = p2;
-            submitRequest();
+            yMaps.submitRequest(HomeActivity.this, ROUTE_START_LOCATION, ROUTE_END_LOCATION, drivingRouter);
             new Thread(() -> {
                 String finish_str = null;
                 RootGeolocation rootGeoStart = null;
                 try {
-                    rootGeoStart = new Gson().fromJson(HttpApi.getId("https://geocode-maps.yandex.ru/1.x/?geocode=" + p2.getLongitude() + "," + p2.getLatitude() + "&apikey=" + GEOCODER_API_KEY + "&format=json&results=1&kind=house"), RootGeolocation.class);
+                    rootGeoStart = new Gson().fromJson(HttpApi.getId("https://geocode-maps.yandex.ru/1.x/?geocode=" + p2.getLongitude() + "," + p2.getLatitude() + "&apikey=" + Env.GEOCODER_API_KEY + "&format=json&results=1&kind=house"), RootGeolocation.class);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
                 try {
                     String finish_strUK = rootGeoStart.getResponse().getGeoObjectCollection().getFeatureMember().get(0).getGeoObject().getDescription() + rootGeoStart.getResponse().getGeoObjectCollection().getFeatureMember().get(0).getGeoObject().getName();
-                    finish_str = finish_strUK.replace("Украина","");
+                    finish_str = finish_strUK.replace("Украина", "");
                 } catch (Exception e) {
                     finish_str = null;
                 }
@@ -749,9 +626,15 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                             EditText ft = findViewById(R.id.finish_bottom);
                             runOnUiThread(() -> {
                                 ft.setText(str);
+                                ah.hide(HomeActivity.this, loadFrame);
+
                             });
-                        } else
-                            showToast(getString(R.string.unknown_error_message));
+                        } else {
+                            runOnUiThread(() -> {
+                                ah.hide(HomeActivity.this, loadFrame);
+                                customToast.showToast(HomeActivity.this, HomeActivity.this, getString(R.string.unknown_error_message));
+                            });
+                        }
                         price = null;
                         distance = null;
                         return;
@@ -761,7 +644,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         }
     };
 
-    private final MapObjectDragListener drag = new MapObjectDragListener() {
+    public final MapObjectDragListener drag = new MapObjectDragListener() {
         @Override
         public void onMapObjectDragStart(@NonNull MapObject mapObject) {
 
@@ -774,39 +657,45 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
 
         @Override
         public void onMapObjectDragEnd(@NonNull MapObject mapObject) {
+            runOnUiThread(() -> ah.start(HomeActivity.this, loadFrame));
             DBClass db = new DBClass();
             String hash = db.getHash(HomeActivity.this);
             Point p1 = new Point(point1.getGeometry().getLatitude(), point1.getGeometry().getLongitude());
             ROUTE_START_LOCATION = p1;
-            if(ROUTE_END_LOCATION != null)
-                submitRequest();
-
+            if (ROUTE_END_LOCATION != null)
+                yMaps.submitRequest(HomeActivity.this, ROUTE_START_LOCATION, ROUTE_END_LOCATION, drivingRouter);
 
             new Thread(() -> {
                 String start_str = null;
                 RootGeolocation rootGeoStart = null;
                 try {
-                    rootGeoStart = new Gson().fromJson(HttpApi.getId("https://geocode-maps.yandex.ru/1.x/?geocode=" + p1.getLongitude() + "," + p1.getLatitude() + "&apikey=" + GEOCODER_API_KEY + "&format=json&results=1&kind=house"), RootGeolocation.class);
+                    rootGeoStart = new Gson().fromJson(HttpApi.getId("https://geocode-maps.yandex.ru/1.x/?geocode=" + p1.getLongitude() + "," + p1.getLatitude() + "&apikey=" + Env.GEOCODER_API_KEY + "&format=json&results=1&kind=house"), RootGeolocation.class);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
                 try {
                     String start_strUK = rootGeoStart.getResponse().getGeoObjectCollection().getFeatureMember().get(0).getGeoObject().getDescription() + rootGeoStart.getResponse().getGeoObjectCollection().getFeatureMember().get(0).getGeoObject().getName();
-                    start_str = start_strUK.replace("Украина","");
+                    start_str = start_strUK.replace("Украина", "");
+                    region = rootGeoStart.getResponse().getGeoObjectCollection().getFeatureMember().get(0).getGeoObject().getMetaDataProperty().getGeocoderMetaData().getAddress().getComponents().get(2).getName();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
                 while (true) {
                     if (distance != null & price != null) {
-                        String arg = "start=" + p1.getLongitude() + "," + p1.getLatitude() + "&start_string=" + start_str + "&price=" + price + "&distance=" + distance;
+                        String arg = "start=" + p1.getLongitude() + "," + p1.getLatitude() + "&start_string=" + start_str + "&price=" + price + "&distance=" + distance + "&region=" + region;
                         if (start_str != null && HttpApi.put(Env.URL_API_DRAG + "/" + hash, arg) == HttpURLConnection.HTTP_OK) {
                             final String str = start_str;
                             EditText st = findViewById(R.id.start_bottom);
                             runOnUiThread(() -> {
                                 st.setText(str);
+                                ah.hide(HomeActivity.this, loadFrame);
                             });
-                        } else
-                            showToast(getString(R.string.error_not_read_point));
+                        } else {
+                            runOnUiThread(() -> {
+                                ah.hide(HomeActivity.this, loadFrame);
+                                customToast.showToast(HomeActivity.this, HomeActivity.this, (getString(R.string.error_not_read_point)));
+                            });
+                        }
                         price = null;
                         distance = null;
                         return;
@@ -816,28 +705,23 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         }
     };
 
-
-    public void showToast(final String toast) {
-        runOnUiThread(() -> Toast.makeText(HomeActivity.this, toast, Toast.LENGTH_LONG).show());
-    }
-
     private void pingPong(String hash) {
-        new Thread(()->{
-            while(true){
+        new Thread(() -> {
+            while (true) {
                 try {
                     Thread.sleep(2000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                if(mWebSocketClient != null) {
+                if (mWebSocketClient != null) {
                     if (mWebSocketClient.getConnection().isOpen())
                         mWebSocketClient.send("{\"ping\" : \"" + hash + "\"}");
                 }
                 isPong = false;
                 try {
                     Thread.sleep(2000);
-                    if(!isPong) {
-                        if(mWebSocketClient.getConnection().isOpen())
+                    if (!isPong) {
+                        if (mWebSocketClient.getConnection().isOpen())
                             mWebSocketClient.close();
                         connectToSocket();
                     }
@@ -863,10 +747,12 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
             public void onOpen(ServerHandshake serverHandshake) {
                 Log.d("WebsocketGeoHome", "Opened");
             }
+
             private boolean flag = false;
+
             @Override
             public void onMessage(String s) {
-                if(s.equals("ponggeo")) {
+                if (s.equals("ponggeo")) {
                     isPong = true;
                 } else {
                     try {
@@ -976,7 +862,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         mWebSocketClient.connect();
     }
 
-    private void connectToSocketButton() {
+    public void connectToSocketButton() {
         URI uri;
         try {
             uri = new URI("ws" + "://" + "45.86.47.12:32000");
@@ -999,6 +885,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
             public void onClose(int i, String s, boolean b) {
                 Log.d("WebsocketH", "Closed " + s);
             }
+
             @Override
             public void onError(Exception e) {
                 Log.d("WebsocketH", "Error " + e.getMessage());
@@ -1009,37 +896,6 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-    }
-
-    private void RedirectToDriver() {
-        String url_order = Env.URL_API_ORDERS + "/" + DBClass.getHash(this);
-        Runnable geoListener = () -> {
-            try {
-                RootOrderOne r = new Gson().fromJson(HttpApi.getId(url_order), RootOrderOne.class);
-                if (r.getActive().equals("3") || r.getActive().equals("4") || r.getActive().equals("5")) {
-                    startActivity(new Intent("com.example.taxi_full.GoUser"));
-                    executor.shutdown();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        };
-
-
-        executor.scheduleAtFixedRate(geoListener, 0, 5, TimeUnit.SECONDS);
-    }
-
-    private void RedirectToDriverFirst() {
-        String url_order = Env.URL_API_ORDERS + "/" + DBClass.getHash(this);
-        new Thread(() -> {
-            RootOrderOne r = null;
-            try {if(!HttpApi.getId(url_order).equals("0")) {r = new Gson().fromJson(HttpApi.getId(url_order), RootOrderOne.class);}} catch (Exception e) {e.printStackTrace();}
-            if (r != null && (r.getActive().equals("3") || r.getActive().equals("4") || r.getActive().equals("5"))) {
-                try {TimeUnit.MILLISECONDS.sleep(500);} catch (InterruptedException e) {e.printStackTrace();}
-                startActivity(new Intent("com.example.taxi_full.GoUser"));
-            }
-        }).start();
-
     }
 
     @Override
@@ -1060,22 +916,24 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
             }
         }
 
-        EditText cityEdit = findViewById(R.id.start_bottom);
-        String city = cityEdit.getText().toString().split(",", 2)[0];
-        Transliterator toLatinTrans = null;
-        String result = "";
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-            toLatinTrans = Transliterator.getInstance(CYRILLIC_TO_LATIN);
-            result = toLatinTrans.transliterate(city);
-        }
-        String finalResult = "admin"+result;
         Runnable getD = () -> {
             try {
-                if(!HttpApi.getId(Env.URL_API_ADMIN + finalResult + "_"+"0"+"_"+"0").equals("0")) {
-                    AdminDataPojo data = new Gson().fromJson(HttpApi.getId(Env.URL_API_ADMIN + finalResult + "_"+"0"+"_"+"0"), AdminDataPojo.class);
+                if (!HttpApi.getId(Env.URL_API_ADMIN + region + "_" + "0" + "_" + "0").equals("0")) {
+                    AdminDataPojo data = new Gson().fromJson(HttpApi.getId(Env.URL_API_ADMIN + region + "_" + "0" + "_" + "0"), AdminDataPojo.class);
+                    RootWeather rootWeather = new Gson().fromJson(HttpApi.getId("https://api.weatherapi.com/v1/current.json?key=" + Env.WEATHER_API_KEY + "&q=" + ROUTE_START_LOCATION.getLatitude() + "," + ROUTE_START_LOCATION.getLongitude() + "&aqi=no"), RootWeather.class);
                     pr = data.getPrice();
+                    weather = data.getWeather();
+                    delivery = data.getDelivery();
+                    day = data.getDay();
+                    if(rootWeather.getCurrent().getIsDay() == 1)
+                        day = "0";
+                    if(rootWeather.getCurrent().getPrecipMm() < 1.5)
+                        weather = "0";
                 } else {
                     pr = "50";
+                    weather = "0";
+                    delivery = "0";
+                    day = "0";
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -1089,16 +947,20 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
             e.printStackTrace();
         }
         int mathPrice = 0;
-        if(getClasOrder() == 1)
+        if (getClasOrder() == 1) {
             mathPrice = (int) Math.round(((smallRouteDistance * Integer.parseInt(pr)) / 1000));
-        else if (getClasOrder() == 2)
+            mathPrice = math.mathPrice(mathPrice, weather, delivery, day);
+        } else if (getClasOrder() == 2) {
             mathPrice = (int) Math.round(((smallRouteDistance * Integer.parseInt(pr)) / 1000) * 1.5);
-        else
+            mathPrice = math.mathPrice(mathPrice, weather, delivery, day);
+        } else {
             mathPrice = (int) Math.round(((smallRouteDistance * Integer.parseInt(pr)) / 1000) * 2.5);
+            mathPrice = math.mathPrice(mathPrice, weather, delivery, day);
+        }
         price = String.valueOf(mathPrice);
         TextView e = findViewById(R.id.text_home);
-        e.setText("Стоимоть : " + price + "p");
-        if(routesCollection != null && !routesCollection.isEmpty())
+        e.setText("Стоимость : " + price + "p");
+        if (routesCollection != null && !routesCollection.isEmpty())
             routesCollection.get(0).setGeometry(smallRoute);
         else
             routesCollection.add(mapObjects.addPolyline(smallRoute));
@@ -1116,79 +978,13 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show();
     }
 
-    private void submitRequest() {
-        DrivingOptions drivingOptions = new DrivingOptions();
-        VehicleOptions vehicleOptions = new VehicleOptions();
-        ArrayList<RequestPoint> requestPoints = new ArrayList<>();
-        try {
-            runOnUiThread(() -> {
-                if (ROUTE_START_LOCATION != null && ROUTE_END_LOCATION != null) {
-                    requestPoints.add(new RequestPoint(ROUTE_START_LOCATION, RequestPointType.WAYPOINT, null));
-                    requestPoints.add(new RequestPoint(ROUTE_END_LOCATION, RequestPointType.WAYPOINT, null));
-                }
-                drivingSession = drivingRouter.requestRoutes(requestPoints, drivingOptions, vehicleOptions, HomeActivity.this);
-            });
-        } catch (Exception e) {
-            Log.d("Ex parse", e.getMessage());
-        }
-    }
-
     @Override
     public void onBackPressed() {
         //super.onBackPressed();
+
     }
 
-    private int getPrice(){
-        new Thread(()->{
-
-        }).start();
-        return 0;
-    }
-
-    private void bottomEditStartFinishPoint(){
-        MyLocationListener.SetUpLocationListener(this);
-        DBClass DBClass = new DBClass();
-        new Thread(()->{
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            try {
-                String url_order = Env.URL_API_ORDERS + "/" + DBClass.getHash(this);
-                RootGeolocation rootGeolocation = null;
-                String startFinishString = null;
-                RootOrderOne rootOrderOne = null;
-
-                if (!HttpApi.getId(url_order).equals("0"))
-                    rootOrderOne = new Gson().fromJson(HttpApi.getId(url_order), RootOrderOne.class);
-
-                if(rootOrderOne == null || rootOrderOne.getStart_string().equals("") || rootOrderOne.getFinish_string().equals("")) {
-                    rootGeolocation = new Gson().fromJson(HttpApi.getId("https://geocode-maps.yandex.ru/1.x/?geocode=" + MyLocationListener.imHere.getLongitude() + "," + MyLocationListener.imHere.getLatitude() + "&apikey=" + GEOCODER_API_KEY + "&format=json&results=1&kind=house"), RootGeolocation.class);
-                    try {
-                        String startFinishStringUK = rootGeolocation.getResponse().getGeoObjectCollection().getFeatureMember().get(0).getGeoObject().getDescription();
-                        startFinishString = startFinishStringUK.replace("Украина", "");
-                        startFinishString = startFinishString.replace("Россия", "");
-                    } catch (Exception ignored) {}
-                }
-
-                String finalStartFinishString = startFinishString;
-                RootOrderOne finalRootOrderOne = rootOrderOne;
-                runOnUiThread(() -> {
-                    if(finalRootOrderOne == null || finalRootOrderOne.getStart_string().equals(""))
-                        if (finalStartFinishString != null)
-                            runOnUiThread(() -> start.setText(finalStartFinishString));
-                    if(finalRootOrderOne == null || finalRootOrderOne.getFinish_string().equals(""))
-                        if (finalStartFinishString != null)
-                            runOnUiThread(()->finish.setText(finalStartFinishString));
-                });
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }).start();
-    }
-
-    private void startEdit(){
+    private void startEdit() {
         start.setOnEditorActionListener((v, actionId, event) -> {
             boolean handled = false;
             if (actionId == EditorInfo.IME_ACTION_SEND) {
@@ -1197,38 +993,39 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                     try {
                         String hash = db.getHash(HomeActivity.this);
                         RootGeolocation rootGeolocation = null;
-                        rootGeolocation = new Gson().fromJson(HttpApi.getId("https://geocode-maps.yandex.ru/1.x/?geocode=" + start.getText() + "&apikey=" + GEOCODER_API_KEY + "&format=json&results=1&kind=house"), RootGeolocation.class);
+                        rootGeolocation = new Gson().fromJson(HttpApi.getId("https://geocode-maps.yandex.ru/1.x/?geocode=" + start.getText() + "&apikey=" + Env.GEOCODER_API_KEY + "&format=json&results=1&kind=house"), RootGeolocation.class);
+                        region = rootGeolocation.getResponse().getGeoObjectCollection().getFeatureMember().get(0).getGeoObject().getMetaDataProperty().getGeocoderMetaData().getAddress().getComponents().get(2).getName();
                         ArrayList<String> pos = new ArrayList<>(Arrays.asList(rootGeolocation.getResponse().getGeoObjectCollection().getFeatureMember().get(0).getGeoObject().getPoint().getPos().split(" ")));
                         Point p1 = new Point(Double.parseDouble(pos.get(1)), Double.parseDouble(pos.get(0)));
                         ROUTE_START_LOCATION = p1;
-                        if(ROUTE_END_LOCATION != null)
-                            submitRequest();
+                        if (ROUTE_END_LOCATION != null)
+                            yMaps.submitRequest(HomeActivity.this, ROUTE_START_LOCATION, ROUTE_END_LOCATION, drivingRouter);
                         else {
-                            String arr = "hash_user=" + hash + "&hash_driver=" + "&start=" + p1.getLongitude() + "," + p1.getLatitude() + "&start_string=" + start.getText();
+                            String arr = "hash_user=" + hash + "&hash_driver=" + "&start=" + p1.getLongitude() + "," + p1.getLatitude() + "&start_string=" + start.getText() + "&region=" + region;
                             if (HttpApi.post(Env.URL_API_ORDERS, arr) == HttpURLConnection.HTTP_OK) {
-                                runOnUiThread(()->{
-                                    point1 = mapObjects.addPlacemark(p1,  ImageProvider.fromResource(HomeActivity.this, R.drawable.pin));
+                                runOnUiThread(() -> {
+                                    point1 = mapObjects.addPlacemark(p1, ImageProvider.fromResource(HomeActivity.this, R.drawable.pin));
                                 });
-                                showToast("Успех");
+                                customToast.showToast(HomeActivity.this, HomeActivity.this, "Успех");
                                 price = null;
                                 distance = null;
                                 return;
                             }
                         }
-                        while(true){
-                            if(distance != null && price != null) {
-                                String arg = "start=" + p1.getLongitude() + "," + p1.getLatitude() + "&start_string=" + start.getText() + "&price=" + price + "&distance=" + distance;
+                        while (true) {
+                            sleep(100);
+                            if (distance != null && price != null && region != null) {
+                                String arg = "start=" + p1.getLongitude() + "," + p1.getLatitude() + "&start_string=" + start.getText() + "&price=" + price + "&distance=" + distance + "&region=" + region;
                                 if (HttpApi.put(Env.URL_API_DRAG + "/" + hash, arg) == HttpURLConnection.HTTP_OK) {
-                                    runOnUiThread(()->{
-                                        if(point1 != null)
+                                    runOnUiThread(() -> {
+                                        if (point1 != null)
                                             point1.setGeometry(p1);
                                         else
-                                            point1 = mapObjects.addPlacemark(p1,  ImageProvider.fromResource(HomeActivity.this, R.drawable.pin));
+                                            point1 = mapObjects.addPlacemark(p1, ImageProvider.fromResource(HomeActivity.this, R.drawable.pin));
                                     });
-                                    showToast("Успех");
-                                }
-                                else
-                                    showToast(getString(R.string.error_not_read_point));
+                                    customToast.showToast(HomeActivity.this, HomeActivity.this, "Успех");
+                                } else
+                                    customToast.showToast(HomeActivity.this, HomeActivity.this, getString(R.string.error_not_read_point));
 
                                 price = null;
                                 distance = null;
@@ -1236,7 +1033,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                             }
                             sleep(100);
                         }
-                    } catch(IOException e){
+                    } catch (IOException e) {
                         e.printStackTrace();
                     }
                 }).start();
@@ -1246,7 +1043,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         });
     }
 
-    private void finishEdit(){
+    private void finishEdit() {
         finish.setOnEditorActionListener((v, actionId, event) -> {
             boolean handled = false;
             if (actionId == EditorInfo.IME_ACTION_SEND) {
@@ -1255,38 +1052,39 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                     try {
                         String hash = db.getHash(HomeActivity.this);
                         RootGeolocation rootGeolocation = null;
-                        rootGeolocation = new Gson().fromJson(HttpApi.getId("https://geocode-maps.yandex.ru/1.x/?geocode=" + finish.getText() + "&apikey=" + GEOCODER_API_KEY + "&format=json&results=1&kind=house"), RootGeolocation.class);
+                        rootGeolocation = new Gson().fromJson(HttpApi.getId("https://geocode-maps.yandex.ru/1.x/?geocode=" + finish.getText() + "&apikey=" + Env.GEOCODER_API_KEY + "&format=json&results=1&kind=house"), RootGeolocation.class);
                         ArrayList<String> pos = new ArrayList<>(Arrays.asList(rootGeolocation.getResponse().getGeoObjectCollection().getFeatureMember().get(0).getGeoObject().getPoint().getPos().split(" ")));
                         Point p2 = new Point(Double.parseDouble(pos.get(1)), Double.parseDouble(pos.get(0)));
                         ROUTE_END_LOCATION = p2;
-                        submitRequest();
+                        yMaps.submitRequest(HomeActivity.this, ROUTE_START_LOCATION, ROUTE_END_LOCATION, drivingRouter);
 
                         while (true) {
+                            sleep(100);
                             if (distance != null && price != null) {
                                 String arg = "finish=" + p2.getLongitude() + "," + p2.getLatitude() + "&finish_string=" + finish.getText() + "&price=" + price + "&distance=" + distance;
                                 if (HttpApi.put(Env.URL_API_ORDERS + "/" + hash, arg) == HttpURLConnection.HTTP_OK) {
-                                    runOnUiThread(()->{
-                                        if(point2 != null)
+                                    runOnUiThread(() -> {
+                                        if (point2 != null)
                                             point2.setGeometry(p2);
                                         else
                                             point2 = mapObjects.addPlacemark(p2, ImageProvider.fromResource(HomeActivity.this, R.drawable.finish));
                                     });
-                                    showToast("Успех");
+                                    customToast.showToast(HomeActivity.this, HomeActivity.this, "Успех");
                                     price = null;
                                     distance = null;
                                     return;
                                 } else
-                                    showToast(getString(R.string.error_not_read_point));
+                                    customToast.showToast(HomeActivity.this, HomeActivity.this, getString(R.string.error_not_read_point));
                             }
                             sleep(100);
                         }
-                    } catch(IOException e){
+                    } catch (IOException e) {
                         e.printStackTrace();
                     }
                 }).start();
                 InputMethodManager imm = null;
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-                    imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                 }
                 imm.hideSoftInputFromWindow(getWindow().getCurrentFocus().getWindowToken(), 0);
                 handled = true;
@@ -1295,98 +1093,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         });
     }
 
-    private void echoTextMenu(){
-        new Thread(() -> {
-            DBClass dbClass = new DBClass();
-            String hash = dbClass.getHash(this);
-            String url = Env.URL_API_USER + "/" + hash + "/" + dbClass.getDC(this);
-            try {
-                RootUserOne rootUserOne = new Gson().fromJson(HttpApi.getId(url), RootUserOne.class);
-                runOnUiThread(() -> {
-                    if (rootUserOne.getError() != null && rootUserOne.getError().equals("")) {
-                        TextView name_surname_menu = findViewById(R.id.menuNameSurname);
-                        TextView rate_menu = findViewById(R.id.menuRate);
-                        name_surname_menu.setText(rootUserOne.getNameSurname() + "");
-                        if (rootUserOne.getRate() == null || rootUserOne.getRate().equals(""))
-                            rate_menu.setText("5");
-                        else rate_menu.setText(rootUserOne.getRate());
-                    }
-                });
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }).start();
-    }
-
-    private void unGo(){
-        Button go = findViewById(R.id.buttonGoSheet);
-        Button goOff = findViewById(R.id.buttonGoSheetOff);
-        goOff.setOnClickListener(view -> new Thread(() -> {
-            DBClass db = new DBClass();
-            String hash = db.getHash(HomeActivity.this);
-            String url = Env.URL_API_USERS + "/" + hash;
-            String arg = "active=1" + "&class=" + Class;
-            if (HttpApi.put(url, arg) == HttpURLConnection.HTTP_OK) {
-                connectToSocketButton();
-                mWebSocketClientButton.send("buttonOn");
-                mWebSocketClientButton.close();
-                runOnUiThread(() -> {
-                    if(point1 != null && point2 != null) {
-                        point1.setDraggable(true);
-                        point2.setDraggable(true);
-                    }
-                    go.setEnabled(true);
-                    unBlockEditOrder();
-                    go.setVisibility(View.VISIBLE);
-                    goOff.setVisibility(View.GONE);
-                });
-            }
-        }).start());
-    }
-
-    private void go(){
-        Button go = findViewById(R.id.buttonGoSheet);
-        Button goOff = findViewById(R.id.buttonGoSheetOff);
-        Runnable flag = () -> {
-            if(point2!=null) {
-                runOnUiThread(()-> go.setOnClickListener(view -> {
-                    if(dialogOrder) {
-                        DBClass db = new DBClass();
-                        String hash = db.getHash(HomeActivity.this);
-                        String url = Env.URL_API_USERS + "/" + hash;
-                        String arg = "active=2" + "&class=" + Class;
-                        new Thread(() -> {
-                            if (HttpApi.put(url, arg) == HttpURLConnection.HTTP_OK) {
-                                showToast("Ожидайте пока примут ваш заказ");
-                                RedirectToDriver();
-                                connectToSocketButton();
-                                mWebSocketClientButton.send("buttonOn");
-                                mWebSocketClientButton.close();
-                                runOnUiThread(() -> {
-                                    if(point1 != null && point2 != null) {
-                                        point1.setDraggable(false);
-                                        point2.setDraggable(false);
-                                    }
-                                    go.setEnabled(false);
-                                    blockEditOrder();
-                                    go.setVisibility(View.GONE);
-                                    goOff.setVisibility(View.VISIBLE);
-                                });
-                            }
-                        }).start();
-                    } else
-                        runOnUiThread(()-> showDialog(DIALOG));
-                }));
-                executor2.shutdown();
-            }
-
-        };
-
-
-        executor.scheduleAtFixedRate(flag, 0, 500, TimeUnit.MILLISECONDS);
-    }
-
-    private void dragPoints(){
+    private void dragPoints() {
         new Thread(() -> {
             DBClass db = new DBClass();
             String hash = db.getHash(HomeActivity.this);
@@ -1395,31 +1102,31 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                     RootOrderOne rootOrderOne = new Gson().fromJson(HttpApi.getId(Env.URL_API_ORDERS + "/" + hash), RootOrderOne.class);
                     runOnUiThread(() -> {
                         if (rootOrderOne.getStart() != null) {
-                            String startSTR = rootOrderOne.getStart_string().replace("Россия","");
+                            String startSTR = rootOrderOne.getStart_string().replace("Россия", "");
                             startSTR = startSTR.replace("Украина", "");
                             String finalStartSTR = startSTR;
-                            runOnUiThread(()->start.setText(finalStartSTR));
+                            runOnUiThread(() -> start.setText(finalStartSTR));
                             ArrayList<String> data = new ArrayList<>(Arrays.asList(rootOrderOne.getStart().split(",")));
                             Point start = new Point(Double.parseDouble(data.get(1)), Double.parseDouble(data.get(0)));
                             ROUTE_START_LOCATION = start;
                             point1 = mapObjects.addPlacemark(start, ImageProvider.fromResource(HomeActivity.this, R.drawable.pin));
 
-                            if(rootOrderOne.getActive().equals("1")) {
+                            if (rootOrderOne.getActive().equals("1")) {
                                 point1.setDraggable(true);
                                 point1.setDragListener(drag);
                             }
                         }
                         if (!rootOrderOne.getFinish().equals("")) {
-                            String startSTR = rootOrderOne.getFinish_string().replace("Россия","");
+                            String startSTR = rootOrderOne.getFinish_string().replace("Россия", "");
                             startSTR = startSTR.replace("Украина", "");
                             String finalStartSTR = startSTR;
-                            runOnUiThread(()->finish.setText(finalStartSTR));
+                            runOnUiThread(() -> finish.setText(finalStartSTR));
                             ArrayList<String> dataEnd = new ArrayList<>(Arrays.asList(rootOrderOne.getFinish().split(",")));
                             Point finish = new Point(Double.parseDouble(dataEnd.get(1)), Double.parseDouble(dataEnd.get(0)));
                             ROUTE_END_LOCATION = finish;
                             point2 = mapObjects.addPlacemark(finish, ImageProvider.fromResource(HomeActivity.this, R.drawable.finish));
-                            submitRequest();
-                            if(rootOrderOne.getActive().equals("1")) {
+                            yMaps.submitRequest(HomeActivity.this, ROUTE_START_LOCATION, ROUTE_END_LOCATION, drivingRouter);
+                            if (rootOrderOne.getActive().equals("1")) {
                                 point2.setDraggable(true);
                                 point2.setDragListener(dragFinish);
                             }
@@ -1432,27 +1139,8 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         }).start();
     }
 
-    /////////////////
-    private void EditTextLocked(){
-        new Thread(() -> {
-            DBClass db = new DBClass();
-            String hash = db.getHash(HomeActivity.this);
-            try {
-                if (!HttpApi.getId(Env.URL_API_ORDERS + "/" + hash).equals("0")) {
-                    RootOrderOne rootOrderOne = new Gson().fromJson(HttpApi.getId(Env.URL_API_ORDERS + "/" + hash), RootOrderOne.class);
-                    if (rootOrderOne.getActive().equals("2")) {
-                        start.setEnabled(false);
-                        finish.setEnabled(false);
-                    }
-                }
-            }catch (Exception e){
-                e.printStackTrace();
-            }
-        }).start();
-    }
-    ////////////////
 
-    private void StartPointGeolocation(){
+    private void StartPointGeolocation() {
         MyLocationListener.SetUpLocationListener(this);
         new Thread(() -> {
             DBClass db = new DBClass();
@@ -1463,21 +1151,22 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                 if (HttpApi.getId(Env.URL_API_ORDERS + "/" + hash).equals("0")) {
                     Point p = new Point(MyLocationListener.imHere.getLongitude(), MyLocationListener.imHere.getLatitude());
                     ROUTE_START_LOCATION = p;
-                    rootGeocoder = new Gson().fromJson(HttpApi.getId("https://geocode-maps.yandex.ru/1.x/?geocode=" + ROUTE_START_LOCATION.getLatitude() + "," + ROUTE_START_LOCATION.getLongitude() + "&apikey=" + GEOCODER_API_KEY + "&format=json&results=1&kind=house"), RootGeolocation.class);
+                    rootGeocoder = new Gson().fromJson(HttpApi.getId("https://geocode-maps.yandex.ru/1.x/?geocode=" + ROUTE_START_LOCATION.getLatitude() + "," + ROUTE_START_LOCATION.getLongitude() + "&apikey=" + Env.GEOCODER_API_KEY + "&format=json&results=1&kind=house"), RootGeolocation.class);
                     try {
                         String startUK = rootGeocoder.getResponse().getGeoObjectCollection().getFeatureMember().get(0).getGeoObject().getDescription() + rootGeocoder.getResponse().getGeoObjectCollection().getFeatureMember().get(0).getGeoObject().getName();
                         start = startUK.replace("Украина", "");
+                        region = rootGeocoder.getResponse().getGeoObjectCollection().getFeatureMember().get(0).getGeoObject().getMetaDataProperty().getGeocoderMetaData().getAddress().getComponents().get(2).getName();
                     } catch (Exception e) {
                         start = null;
                     }
-                    String arr = "hash_user=" + hash + "&hash_driver=" + "&start=" + ROUTE_START_LOCATION.getLatitude() + "," + ROUTE_START_LOCATION.getLongitude() + "&start_string=" + start;
+                    String arr = "hash_user=" + hash + "&hash_driver=" + "&start=" + ROUTE_START_LOCATION.getLatitude() + "," + ROUTE_START_LOCATION.getLongitude() + "&start_string=" + start + "&region=" + region;
                     if (start != null) {
                         HttpApi.post(Env.URL_API_ORDERS, arr);
                         runOnUiThread(() -> point1 = mapObjects.addPlacemark(new Point(ROUTE_START_LOCATION.getLongitude(), ROUTE_START_LOCATION.getLatitude()), ImageProvider.fromResource(HomeActivity.this, R.drawable.pin)));
-                        String startSS = start.replace("Россия","");
+                        String startSS = start.replace("Россия", "");
                         startSS = startSS.replace("Украина", "");
                         String finalStartSTR = startSS;
-                        runOnUiThread(()->this.start.setText(finalStartSTR));
+                        runOnUiThread(() -> this.start.setText(finalStartSTR));
                     }
                     Point p1 = new Point(MyLocationListener.imHere.getLatitude(), MyLocationListener.imHere.getLongitude());
                     ROUTE_START_LOCATION = p1;
@@ -1500,10 +1189,10 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
             w.getLocationOnScreen(scrcoords);
             float x = event.getRawX() + w.getLeft() - scrcoords[0];
             float y = event.getRawY() + w.getTop() - scrcoords[1];
-            if (event.getAction() == MotionEvent.ACTION_UP && (x < w.getLeft() || x >= w.getRight() || y < w.getTop() || y > w.getBottom()) ) {
+            if (event.getAction() == MotionEvent.ACTION_UP && (x < w.getLeft() || x >= w.getRight() || y < w.getTop() || y > w.getBottom())) {
                 InputMethodManager imm = null;
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-                    imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                 }
                 imm.hideSoftInputFromWindow(getWindow().getCurrentFocus().getWindowToken(), 0);
             }
@@ -1511,172 +1200,52 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         return ret;
     }
 
-    private void finishLoad(){
-        new Thread(()->{
-            DBClass db = new DBClass();
-            try {
-                RootOrderOne rootOrderOne = new Gson().fromJson(HttpApi.getId(Env.URL_API_ORDERS + "/" + db.getHash(this)), RootOrderOne.class);
-                String startSTR = rootOrderOne.getFinish_string().replace("Россия","");
-                startSTR = startSTR.replace("Украина", "");
-                String finalStartSTR = startSTR;
-                runOnUiThread(()->finish.setText(finalStartSTR));
-            } catch (IOException e){
-                e.printStackTrace();
-            }
-        }).start();
-    }
 
-
-    ////////////////
-    private void addHomeWorkBottom(){
-        EditText home = findViewById(R.id.home);
-        EditText work = findViewById(R.id.work);
-
-        home.setOnEditorActionListener((v, actionId, event) -> {
-            boolean handled = false;
-            if (actionId == EditorInfo.IME_ACTION_SEND) {
-                new Thread(() -> {
-                    DBClass db = new DBClass();
-                    try {
-                        String hash = db.getHash(HomeActivity.this);
-                        RootGeolocation rootGeolocation = null;
-                        rootGeolocation = new Gson().fromJson(HttpApi.getId("https://geocode-maps.yandex.ru/1.x/?geocode=" + home.getText() + "&apikey=" + GEOCODER_API_KEY + "&format=json&results=1&kind=house"), RootGeolocation.class);
-                        ArrayList<String> pos = new ArrayList<>(Arrays.asList(rootGeolocation.getResponse().getGeoObjectCollection().getFeatureMember().get(0).getGeoObject().getPoint().getPos().split(" ")));
-                        Point p2 = new Point(Double.parseDouble(pos.get(1)), Double.parseDouble(pos.get(0)));
-
-                        String arg = "home=" + home.getText() + "&pointHome=" + p2.getLongitude() + "," + p2.getLatitude() + "&hw=1";
-                        if (HttpApi.put(Env.URL_HOME_WORK + hash, arg) == HttpURLConnection.HTTP_OK) {
-                            showToast("Успех");
-                        }
-                    } catch(IOException e){
-                        e.printStackTrace();
-                    }
-                }).start();
-                InputMethodManager imm = null;
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-                    imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-                }
-                imm.hideSoftInputFromWindow(getWindow().getCurrentFocus().getWindowToken(), 0);
-                handled = true;
-            }
-            return handled;
-        });
-
-        work.setOnEditorActionListener((v, actionId, event) -> {
-            boolean handled = false;
-            if (actionId == EditorInfo.IME_ACTION_SEND) {
-                new Thread(() -> {
-                    DBClass db = new DBClass();
-                    try {
-                        String hash = db.getHash(HomeActivity.this);
-                        RootGeolocation rootGeolocation = null;
-                        rootGeolocation = new Gson().fromJson(HttpApi.getId("https://geocode-maps.yandex.ru/1.x/?geocode=" + work.getText() + "&apikey=" + GEOCODER_API_KEY + "&format=json&results=1&kind=house"), RootGeolocation.class);
-                        ArrayList<String> pos = new ArrayList<>(Arrays.asList(rootGeolocation.getResponse().getGeoObjectCollection().getFeatureMember().get(0).getGeoObject().getPoint().getPos().split(" ")));
-                        Point p2 = new Point(Double.parseDouble(pos.get(1)), Double.parseDouble(pos.get(0)));
-
-                        String arg = "work=" + work.getText() + "&pointWork=" + p2.getLongitude() + "," + p2.getLatitude() + "&hw=2";
-                        if (HttpApi.put(Env.URL_HOME_WORK + hash, arg) == HttpURLConnection.HTTP_OK) {
-                            showToast("Успех");
-                        }
-                    } catch(IOException e){
-                        e.printStackTrace();
-                    }
-                }).start();
-                InputMethodManager imm = null;
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-                    imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-                }
-                imm.hideSoftInputFromWindow(getWindow().getCurrentFocus().getWindowToken(), 0);
-                handled = true;
-            }
-            return handled;
-        });
-    }
-    ///////////////
-
-    ////////////////
-    private void loadHomeWorkText(){
-        EditText home = findViewById(R.id.home);
-        EditText work = findViewById(R.id.work);
-        DBClass db = new DBClass();
+    private void startCheck() {
         new Thread(() -> {
-            if(checkHomeWork() != 0) {
-                try {
-                    RootHomeWork rootHomeWork = new Gson().fromJson(HttpApi.getId(Env.URL_HOME_WORK + db.getHash(this)), RootHomeWork.class);
-                    runOnUiThread(() -> {
-                        home.setText(rootHomeWork.getHome());
-                        work.setText(rootHomeWork.getWork());
-                    });
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
-    }
-    ///////////////
-
-    private void startCheck(){
-        new Thread(() -> {
+            Bottom bottom = new Bottom();
             DBClass db = new DBClass();
             String arr = "hash=" + db.getHash(this);
             HttpApi.post(Env.URL_HOME_WORK, arr);
-            loadHomeWorkText();
+            bottom.loadHomeWorkText(homeEdit, workEdit, this, this);
         }).start();
     }
 
-    //////////////
-    private int checkHomeWork(){
-        DBClass db = new DBClass();
-        String url = Env.URL_HOME_WORK + db.getHash(this);
-        AtomicInteger check = new AtomicInteger();
-        check.set(1);
-        new Thread(()->{
-            try {
-                if(HttpApi.getId(url).equals("0")) {
-                    check.set(0);
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }).start();
-
-        return check.get();
-    }
-    /////////////
-
-    private void setPointsHomeWork(){
+    private void setPointsHomeWork() {
         home = findViewById(R.id.homeButt);
         work = findViewById(R.id.workButt);
         EditText homeEdit = findViewById(R.id.home);
         EditText workEdit = findViewById(R.id.work);
 
-        home.setOnClickListener(view -> new Thread(()->{
+        home.setOnClickListener(view -> new Thread(() -> {
             DBClass db = new DBClass();
+            CoreAPI core = new CoreAPI();
             try {
-                if(!homeEdit.getText().toString().equals("")) {
+                if (!homeEdit.getText().toString().equals("")) {
                     RootHomeWork rootHomeWork = new Gson().fromJson(HttpApi.getId(Env.URL_HOME_WORK + db.getHash(this)), RootHomeWork.class);
                     ArrayList<String> data = new ArrayList<>(Arrays.asList(rootHomeWork.getPointHome().split(",")));
                     Point homeP = new Point(Double.parseDouble(data.get(1)), Double.parseDouble(data.get(0)));
                     ROUTE_END_LOCATION = homeP;
-                    submitRequest();
+                    yMaps.submitRequest(HomeActivity.this, ROUTE_START_LOCATION, ROUTE_END_LOCATION, drivingRouter);
 
                     while (true) {
+                        sleep(100);
                         if (distance != null && price != null) {
                             String arg = "finish=" + homeP.getLongitude() + "," + homeP.getLatitude() + "&finish_string=" + homeEdit.getText() + "&price=" + price + "&distance=" + distance;
                             if (HttpApi.put(Env.URL_API_ORDERS + "/" + db.getHash(this), arg) == HttpURLConnection.HTTP_OK) {
-                                runOnUiThread(()->{
-                                    if(point2 != null)
+                                runOnUiThread(() -> {
+                                    if (point2 != null)
                                         point2.setGeometry(homeP);
                                     else
                                         point2 = mapObjects.addPlacemark(homeP, ImageProvider.fromResource(HomeActivity.this, R.drawable.finish));
                                 });
-                                showToast("Успех");
+                                customToast.showToast(HomeActivity.this, HomeActivity.this, "Успех");
                                 price = null;
                                 distance = null;
-                                finishLoad();
+                                core.finishLoad(this, this, finish);
                                 return;
                             } else
-                                showToast(getString(R.string.error_not_read_point));
+                                customToast.showToast(HomeActivity.this, HomeActivity.this, getString(R.string.error_not_read_point));
                         }
                         sleep(100);
                     }
@@ -1686,33 +1255,35 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
             }
         }).start());
 
-        work.setOnClickListener(view -> new Thread(()->{
+        work.setOnClickListener(view -> new Thread(() -> {
             DBClass db = new DBClass();
+            CoreAPI core = new CoreAPI();
             try {
-                if(!workEdit.getText().toString().equals("")) {
+                if (!workEdit.getText().toString().equals("")) {
                     RootHomeWork rootHomeWork = new Gson().fromJson(HttpApi.getId(Env.URL_HOME_WORK + db.getHash(this)), RootHomeWork.class);
                     ArrayList<String> data = new ArrayList<>(Arrays.asList(rootHomeWork.getPointWork().split(",")));
                     Point workP = new Point(Double.parseDouble(data.get(1)), Double.parseDouble(data.get(0)));
                     ROUTE_END_LOCATION = workP;
-                    submitRequest();
+                    yMaps.submitRequest(HomeActivity.this, ROUTE_START_LOCATION, ROUTE_END_LOCATION, drivingRouter);
 
                     while (true) {
+                        sleep(100);
                         if (distance != null && price != null) {
                             String arg = "finish=" + workP.getLongitude() + "," + workP.getLatitude() + "&finish_string=" + workEdit.getText() + "&price=" + price + "&distance=" + distance;
                             if (HttpApi.put(Env.URL_API_ORDERS + "/" + db.getHash(this), arg) == HttpURLConnection.HTTP_OK) {
-                                runOnUiThread(()->{
-                                    if(point2 != null)
+                                runOnUiThread(() -> {
+                                    if (point2 != null)
                                         point2.setGeometry(workP);
                                     else
                                         point2 = mapObjects.addPlacemark(workP, ImageProvider.fromResource(HomeActivity.this, R.drawable.finish));
                                 });
-                                showToast("Успех");
+                                customToast.showToast(HomeActivity.this, HomeActivity.this, "Успех");
                                 price = null;
                                 distance = null;
-                                finishLoad();
+                                core.finishLoad(this, this, finish);
                                 return;
                             } else
-                                showToast(getString(R.string.error_not_read_point));
+                                customToast.showToast(HomeActivity.this, HomeActivity.this, getString(R.string.error_not_read_point));
                         }
                         sleep(100);
                     }
@@ -1733,7 +1304,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
             adb.setPositiveButton("OK", null);
             dialog = adb.create();
             dialog.setOnShowListener(dialogInterface -> {
-                Button positiveButton = ((AlertDialog)dialog).getButton(DialogInterface.BUTTON_POSITIVE);
+                Button positiveButton = ((AlertDialog) dialog).getButton(DialogInterface.BUTTON_POSITIVE);
                 positiveButton.setTextColor(getApplicationContext().getResources().getColor(R.color.dark_gray));
                 positiveButton.setTypeface(Typeface.DEFAULT_BOLD);
                 positiveButton.invalidate();
@@ -1752,121 +1323,257 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         return super.onCreateDialog(id);
     }
 
-    /////////////
-    private void setImageDollarClass(RootOrderOne rootOrderOne){
-        if(rootOrderOne.get_class() != null) {
-            if (rootOrderOne.get_class().equals("1")) {
-                dollar_eco.setImageResource(R.drawable.dollar_black);
-                TextView tv=(TextView)findViewById(R.id.eco);
-                String s= (String) tv.getText();
-                SpannableString ss=new SpannableString(s);
-                ss.setSpan(new UnderlineSpan(), 0, s.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                tv.setText(ss);
-                TextView mid = findViewById(R.id.middle);
-                TextView bus = findViewById(R.id.business);
-                mid.setText("Стандарт");
-                bus.setText("Бизнес");
-            }else if (rootOrderOne.get_class().equals("2")) {
-                dollar_middle.setImageResource(R.drawable.dollar_black);
-                TextView tv=(TextView)findViewById(R.id.middle);
-                String s= (String) tv.getText();
-                SpannableString ss=new SpannableString(s);
-                ss.setSpan(new UnderlineSpan(), 0, s.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                tv.setText(ss);
-                TextView eco = findViewById(R.id.eco);
-                TextView bus = findViewById(R.id.business);
-                eco.setText("Эконом");
-                bus.setText("Бизнес");
-            } else if (rootOrderOne.get_class().equals("3")) {
-                dollar_business.setImageResource(R.drawable.dollar_black);
-                TextView tv=(TextView)findViewById(R.id.business);
-                String s= (String) tv.getText();
-                SpannableString ss=new SpannableString(s);
-                ss.setSpan(new UnderlineSpan(), 0, s.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                tv.setText(ss);
-                TextView eco = findViewById(R.id.eco);
-                TextView mid = findViewById(R.id.middle);
-                eco.setText("Эконом");
-                mid.setText("Стандарт");
-            }
-        } else
+
+    private void assign() {
+        start = findViewById(R.id.start_bottom);
+        finish = findViewById(R.id.finish_bottom);
+
+        eco = findViewById(R.id.eco);
+        middle = findViewById(R.id.middle);
+        business = findViewById(R.id.business);
+        dollar_eco = findViewById(R.id.dollar_eco);
+        dollar_middle = findViewById(R.id.dollar_middle);
+        dollar_business = findViewById(R.id.dollar_business);
+        loadFrame = findViewById(R.id.loadId);
+
+        typeNal = findViewById(R.id.type_home_nal);
+        typeOffNal = findViewById(R.id.type_home_offnal);
+
+        eco.setOnClickListener(view -> {
+            Class = 1;
+            TextView tv = (TextView) findViewById(R.id.eco);
+            String s = String.valueOf(tv.getText());
+            SpannableString ss = new SpannableString(s);
+            ss.setSpan(new UnderlineSpan(), 0, s.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            tv.setText(ss);
+            TextView bus = findViewById(R.id.business);
+            TextView mid = findViewById(R.id.middle);
+            bus.setText("Бизнес");
+            mid.setText("Стандарт");
             dollar_eco.setImageResource(R.drawable.dollar_black);
-    }
-    ////////////
-
-    private void getClassOrder() {
-        new Thread(() -> {
-            DBClass db = new DBClass();
-            String hash = db.getHash(HomeActivity.this);
-            try {
-                if (!HttpApi.getId(Env.URL_API_ORDERS + "/" + hash).equals("0")) {
-                    RootOrderOne rootOrderOne = new Gson().fromJson(HttpApi.getId(Env.URL_API_ORDERS + "/" + hash), RootOrderOne.class);
-                    if (rootOrderOne.getActive().equals("2")) {
-                        runOnUiThread(() -> {
-                            HomeActivity.this.blockEditOrder();
-                            HomeActivity.this.setImageDollarClass(rootOrderOne);
-                        });
+            dollar_middle.setImageResource(R.drawable.dollar);
+            dollar_business.setImageResource(R.drawable.dollar);
+            EditText cityEdit = findViewById(R.id.start_bottom);
+            Runnable getD = () -> {
+                try {
+                    if (!HttpApi.getId(Env.URL_API_ADMIN + region + "_" + "0" + "_" + "0").equals("0")) {
+                        AdminDataPojo data = new Gson().fromJson(HttpApi.getId(Env.URL_API_ADMIN + region + "_" + "0" + "_" + "0"), AdminDataPojo.class);
+                        RootWeather rootWeather = new Gson().fromJson(HttpApi.getId("https://api.weatherapi.com/v1/current.json?key=" + Env.WEATHER_API_KEY + "&q=" + ROUTE_START_LOCATION.getLatitude() + "," + ROUTE_START_LOCATION.getLongitude() + "&aqi=no"), RootWeather.class);
+                        pr = data.getPrice();
+                        weather = data.getWeather();
+                        delivery = data.getDelivery();
+                        day = data.getDay();
+                        if(rootWeather.getCurrent().getIsDay() == 1)
+                            day = "0";
+                        if(rootWeather.getCurrent().getPrecipMm() < 1.5)
+                            weather = "0";
+                    } else {
+                        pr = "50";
+                        weather = "0";
+                        delivery = "0";
+                        day = "0";
                     }
-                    if (rootOrderOne.getActive().equals("1")) {
-                        if(rootOrderOne.get_class() != null)
-                            runOnUiThread(()->setImageDollarClass(rootOrderOne));
-                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-            }catch (Exception e){
+            };
+            Thread thread = new Thread(getD);
+            thread.start();
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-        }).start();
+            int mathPrice = (int) Math.round(((smallRouteDistance * Integer.parseInt(pr)) / 1000));
+            mathPrice = math.mathPrice(mathPrice, weather, delivery, day);
+            price = String.valueOf(mathPrice);
+            TextView e = findViewById(R.id.text_home);
+            e.setText("Стоимость : " + price + "p");
+            new Thread(() -> HttpApi.put(Env.URL_API_HISTORY, "hash=" + DBClass.getHash(this) + "&class=1" + "&price=" + price)).start();
+        });
+        middle.setOnClickListener(view -> {
+            Class = 2;
+            dollar_middle.setImageResource(R.drawable.dollar_black);
+            dollar_eco.setImageResource(R.drawable.dollar);
+            dollar_business.setImageResource(R.drawable.dollar);
+            TextView tv = (TextView) findViewById(R.id.middle);
+            String s = (String) tv.getText();
+            SpannableString ss = new SpannableString(s);
+            ss.setSpan(new UnderlineSpan(), 0, s.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            tv.setText(ss);
+            TextView eco = findViewById(R.id.eco);
+            TextView bus = findViewById(R.id.business);
+            eco.setText("Эконом");
+            bus.setText("Бизнес");
+            EditText cityEdit = findViewById(R.id.start_bottom);
+            String city = cityEdit.getText().toString().split(",", 2)[0];
+            Runnable getD = () -> {
+                try {
+                    if (!HttpApi.getId(Env.URL_API_ADMIN + region + "_" + "0" + "_" + "0").equals("0")) {
+                        AdminDataPojo data = new Gson().fromJson(HttpApi.getId(Env.URL_API_ADMIN + region + "_" + "0" + "_" + "0"), AdminDataPojo.class);
+                        RootWeather rootWeather = new Gson().fromJson(HttpApi.getId("https://api.weatherapi.com/v1/current.json?key=" + Env.WEATHER_API_KEY + "&q=" + ROUTE_START_LOCATION.getLatitude() + "," + ROUTE_START_LOCATION.getLongitude() + "&aqi=no"), RootWeather.class);
+                        pr = data.getPrice();
+                        weather = data.getWeather();
+                        delivery = data.getDelivery();
+                        day = data.getDay();
+                        if(rootWeather.getCurrent().getIsDay() == 1)
+                            day = "0";
+                        if(rootWeather.getCurrent().getPrecipMm() < 1.5)
+                            weather = "0";
+                    } else {
+                        pr = "50";
+                        weather = "0";
+                        delivery = "0";
+                        day = "0";
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            };
+            Thread thread = new Thread(getD);
+            thread.start();
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            int mathPrice = (int) Math.round(((smallRouteDistance * Integer.parseInt(pr)) / 1000) * 1.5);
+            mathPrice = math.mathPrice(mathPrice, weather, delivery, day);
+            price = String.valueOf(mathPrice);
+            TextView e = findViewById(R.id.text_home);
+            e.setText("Стоимость : " + price + "p");
+            new Thread(() -> HttpApi.put(Env.URL_API_HISTORY, "hash=" + DBClass.getHash(this) + "&class=2" + "&price=" + price)).start();
+
+        });
+        business.setOnClickListener(view -> {
+            Class = 3;
+            dollar_business.setImageResource(R.drawable.dollar_black);
+            dollar_middle.setImageResource(R.drawable.dollar);
+            dollar_eco.setImageResource(R.drawable.dollar);
+            EditText cityEdit = findViewById(R.id.start_bottom);
+            TextView tv = (TextView) findViewById(R.id.business);
+            String s = tv.getText().toString();
+            SpannableString ss = new SpannableString(s);
+            ss.setSpan(new UnderlineSpan(), 0, s.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            tv.setText(ss);
+            TextView eco = findViewById(R.id.eco);
+            TextView mid = findViewById(R.id.middle);
+            eco.setText("Эконом");
+            mid.setText("Стандарт");
+            String city = cityEdit.getText().toString().split(",", 2)[0];
+            Runnable getD = () -> {
+                try {
+                    if (!HttpApi.getId(Env.URL_API_ADMIN + region + "_" + "0" + "_" + "0").equals("0")) {
+                        AdminDataPojo data = new Gson().fromJson(HttpApi.getId(Env.URL_API_ADMIN + region + "_" + "0" + "_" + "0"), AdminDataPojo.class);
+                        RootWeather rootWeather = new Gson().fromJson(HttpApi.getId("https://api.weatherapi.com/v1/current.json?key=" + Env.WEATHER_API_KEY + "&q=" + ROUTE_START_LOCATION.getLatitude() + "," + ROUTE_START_LOCATION.getLongitude() + "&aqi=no"), RootWeather.class);
+                        pr = data.getPrice();
+                        weather = data.getWeather();
+                        delivery = data.getDelivery();
+                        day = data.getDay();
+                        if(rootWeather.getCurrent().getIsDay() == 1)
+                            day = "0";
+                        if(rootWeather.getCurrent().getPrecipMm() < 1.5)
+                            weather = "0";
+                    } else {
+                        pr = "50";
+                        weather = "0";
+                        delivery = "0";
+                        day = "0";
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            };
+            Thread thread = new Thread(getD);
+            thread.start();
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            int mathPrice = (int) Math.round(((smallRouteDistance * Integer.parseInt(pr)) / 1000) * 2.5);
+            mathPrice = math.mathPrice(mathPrice, weather, delivery, day);
+            price = String.valueOf(mathPrice);
+            TextView e = findViewById(R.id.text_home);
+            e.setText("Стоимость : " + price + "p");
+            new Thread(() -> HttpApi.put(Env.URL_API_HISTORY, "hash=" + DBClass.getHash(this) + "&class=3" + "&price=" + price)).start();
+        });
     }
 
-    ////////////
-    private void blockEditOrder() {
+    private void go() {
         Button go = findViewById(R.id.buttonGoSheet);
-        start.setEnabled(false);
-        finish.setEnabled(false);
-        eco.setEnabled(false);
-        middle.setEnabled(false);
-        business.setEnabled(false);
-        typeNal.setEnabled(false);
-        typeOffNal.setEnabled(false);
-        typeNal.setEnabled(false);
-        typeOffNal.setEnabled(false);
-        go.setEnabled(false);
-    }
-
-    private void unBlockEditOrder() {
-        Button go = findViewById(R.id.buttonGoSheet);
-        start.setEnabled(true);
-        finish.setEnabled(true);
-        eco.setEnabled(true);
-        middle.setEnabled(true);
-        business.setEnabled(true);
-        typeNal.setEnabled(true);
-        typeOffNal.setEnabled(true);
-        typeNal.setEnabled(true);
-        typeOffNal.setEnabled(true);
-        go.setEnabled(true);
-    }
-
-
-    private void isStartOrder(){
         Button goOff = findViewById(R.id.buttonGoSheetOff);
-        new Thread(()->{
+        Runnable flag = () -> {
+            if (point2 != null) {
+                runOnUiThread(() -> go.setOnClickListener(view -> {
+                    if (dialogOrder) {
+                        DBClass db = new DBClass();
+                        String hash = db.getHash(HomeActivity.this);
+                        String url = Env.URL_API_USERS + "/" + hash;
+                        String arg = "active=2" + "&class=" + Class;
+                        new Thread(() -> {
+                            if (HttpApi.put(url, arg) == HttpURLConnection.HTTP_OK) {
+                                customToast.showToast(this, this, "Ожидайте пока примут ваш заказ");
+                                core.RedirectToDriver(this, this, executor);
+                                connectToSocketButton();
+                                mWebSocketClientButton.send("buttonOn");
+                                mWebSocketClientButton.close();
+                                runOnUiThread(() -> {
+                                    if (point1 != null && point2 != null) {
+                                        point1.setDraggable(false);
+                                        point2.setDraggable(false);
+                                    }
+                                    go.setEnabled(false);
+                                    bottom.blockEditOrder(this,
+                                            start, finish,
+                                            eco, middle, business,
+                                            typeNal, typeOffNal);
+                                    go.setVisibility(View.GONE);
+                                    goOff.setVisibility(View.VISIBLE);
+                                });
+                            }
+                        }).start();
+                    } else
+                        runOnUiThread(() -> showDialog(DIALOG));
+                }));
+                executor2.shutdown();
+            }
+
+        };
+
+
+        executor.scheduleAtFixedRate(flag, 500, 500, TimeUnit.MILLISECONDS);
+    }
+
+    private void unGo() {
+        Button go = findViewById(R.id.buttonGoSheet);
+        Button goOff = findViewById(R.id.buttonGoSheetOff);
+        goOff.setOnClickListener(view -> new Thread(() -> {
             DBClass db = new DBClass();
             String hash = db.getHash(HomeActivity.this);
-            try {
-                if (!HttpApi.getId(Env.URL_API_ORDERS + "/" + hash).equals("0")) {
-                    RootOrderOne rootOrderOne = new Gson().fromJson(HttpApi.getId(Env.URL_API_ORDERS + "/" + hash), RootOrderOne.class);
-                    if(rootOrderOne.getActive().equals("2")) {
-                        runOnUiThread(()-> goOff.setVisibility(View.VISIBLE));
-                        unGo();
+            String url = Env.URL_API_USERS + "/" + hash;
+            String arg = "active=1" + "&class=" + Class;
+            if (HttpApi.put(url, arg) == HttpURLConnection.HTTP_OK) {
+                connectToSocketButton();
+                mWebSocketClientButton.send("buttonOn");
+                mWebSocketClientButton.close();
+                runOnUiThread(() -> {
+                    if (point1 != null && point2 != null) {
+                        point1.setDraggable(true);
+                        point2.setDraggable(true);
                     }
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
+                    go.setEnabled(true);
+                    bottom.unBlockEditOrder(this,
+                            start, finish,
+                            eco, middle, business,
+                            typeNal, typeOffNal);
+                    go.setVisibility(View.VISIBLE);
+                    goOff.setVisibility(View.GONE);
+                });
             }
-        }).start();
+        }).start());
     }
-    ///////////
+
 
 }
 

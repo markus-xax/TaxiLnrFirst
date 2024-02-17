@@ -1,5 +1,6 @@
 package com.example.taxi_full.view.go.driver;
 
+import static com.example.taxi_full.API.env.Env.URL_API_USERS;
 import static java.lang.Thread.sleep;
 
 import android.content.Intent;
@@ -21,7 +22,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.taxi_full.API.DBClass;
 import com.example.taxi_full.API.HttpApi;
 import com.example.taxi_full.API.MyLocationListener;
+import com.example.taxi_full.API.env.Env;
 import com.example.taxi_full.API.env.StyleCard;
+import com.example.taxi_full.API.model.AdminDataPojo;
 import com.example.taxi_full.API.model.RootGeolocationRoom;
 import com.example.taxi_full.API.model.RootOrderOne;
 import com.example.taxi_full.API.model.RootUserOne;
@@ -60,6 +63,7 @@ import org.java_websocket.drafts.Draft_17;
 import org.java_websocket.handshake.ServerHandshake;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -77,9 +81,7 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
 
     private WebSocketClient mWebSocketClient;
     private WebSocketClient mWebSocketClientNotifications;
-    private String hash;
     private DBClass dbClass = new DBClass();
-    private final String URL_API_USERS = "http://45.86.47.12/api/users";
     private final String URL_API_ORDERS_TREE = "http://45.86.47.12/api/ordersThree";
     private RootOrderOne r;
     private UserLocationLayer userLocationLayer;
@@ -96,12 +98,16 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
     private PlacemarkMapObject placemarkMapObject;
     private final String URL_API = "http://45.86.47.12/api/orders";
     private final String URL_API_TIME = "http://45.86.47.12/api/time";
-    private String DistanceRoute,TimeRoute;
+    private String DistanceRoute, TimeRoute;
     private TextView time;
     private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
     private boolean isPong, isPongNot;
     private boolean flagNew = false;
     private int c2 = Color.rgb(100, 200, 233);
+    private final ScheduledExecutorService executor1 = Executors.newScheduledThreadPool(1);
+    private final ScheduledExecutorService executor2 = Executors.newScheduledThreadPool(1);
+    TextView waitTime, priceWait;
+    private String region;
 
 
     @Override
@@ -128,7 +134,45 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
 
         StyleCard.setMapStyle(mapView);
 
-        hash = dbClass.getHash(this);
+        Runnable getRegion = () -> {
+            DBClass = new DBClass();
+            String url = Env.URL_API_ORDERS + "/" + DBClass.getHash(this);
+            try {
+                if (!HttpApi.getId(url).equals("0")) {
+                    RootOrderOne r = new Gson().fromJson(HttpApi.getId(url), RootOrderOne.class);
+                    if (!r.getRegion().equals(""))
+                        region = r.getRegion();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        };
+
+        Thread reg = new Thread(getRegion);
+        reg.start();
+        try {
+            reg.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        TextView cancel = findViewById(R.id.cancel);
+
+        cancel.setOnClickListener(v -> {
+            executor1.shutdown();
+            executor2.shutdown();
+            DBClass = new DBClass();
+            String hash = DBClass.getHash(this);
+            String url = Env.URL_API_USERS +"/"+hash;
+            String arg = "active=0";
+            new Thread(()->{
+                if(HttpApi.put(url, arg) == HttpURLConnection.HTTP_OK) {
+                    startActivity(new Intent("com.example.taxi_full.HomeDriver"));
+                }
+            }).start();
+        });
+
+
 
 //        ImageButton msg = findViewById(R.id.msgD);
 //        msg.setOnClickListener(view -> startActivity(new Intent("com.example.taxi_full.Chat")));
@@ -137,43 +181,47 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
         time = findViewById(R.id.time);
         TextView price = findViewById(R.id.price);
         TextView distance = findViewById(R.id.distance);
+
+        waitTime = findViewById(R.id.wait_time);
+        priceWait = findViewById(R.id.price_wait);
 //        new Thread(() -> {
 //            try {
 //                tcpSocket.TCP_Conn(19800);
 //            } catch (IOException e) {Log.d("stringS", e.getMessage());}
 //        }).start();
 
-        new Thread(()->{
+        new Thread(() -> {
             try {
                 String hash = DBClass.getHash(GoActivityDriver.this);
-                String url = URL_API +"/"+hash;
+                String url = URL_API + "/" + hash;
                 RootOrderOne rootOrderOne = new Gson().fromJson(HttpApi.getId(url), RootOrderOne.class);
-                runOnUiThread(()->{
-                    if(rootOrderOne.getStart_string() != null)
+                runOnUiThread(() -> {
+                    if (rootOrderOne.getStart_string() != null)
                         cord.setText(rootOrderOne.getStart_string());
-                    if(rootOrderOne.getPrice() != null && rootOrderOne.getDistance() != null){
+                    if (rootOrderOne.getPrice() != null && rootOrderOne.getDistance() != null) {
                         price.setText(rootOrderOne.getPrice());
                         distance.setText(rootOrderOne.getDistance());
                     }
 
                 });
                 telephone(rootOrderOne);
-            } catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }).start();
 
         Button land = findViewById(R.id.land);
         land.setOnClickListener(view -> {
+            executor1.shutdown();
+            executor2.shutdown();
             DBClass = new DBClass();
             String hash = DBClass.getHash(this);
-            String url = URL_API_USERS +"/"+hash;
+            String url = URL_API_USERS + "/" + hash;
             String arg = "active=4";
-            new Thread(()->{
-                if(HttpApi.put(url, arg) == HttpURLConnection.HTTP_OK) {
+            new Thread(() -> {
+                if (HttpApi.put(url, arg) == HttpURLConnection.HTTP_OK) {
                     flagNew = true;
                     startActivity(new Intent("com.example.taxi_full.view.RequestDriver"));
-                    //вывод всплыувуающего окна
                 }
             }).start();
         });
@@ -183,24 +231,55 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
             place.setVisibility(View.GONE);
             //Сенд месседжа юзеру
             String hash = dbClass.getHash(GoActivityDriver.this);
-            String url = URL_API +"/"+hash;
-
-                new Thread(()->{
-                    try {
+            String url = URL_API + "/" + hash;
+            new Thread(() -> {
+                try {
                     RootOrderOne rootOrderOne = new Gson().fromJson(HttpApi.getId(url), RootOrderOne.class);
                     int inc = 0;
-                    while(true) {
+                    while (true) {
                         inc++;
                         if (mWebSocketClientNotifications.getConnection().isOpen()) {
                             send("Водитель приехал к месту посадки", rootOrderOne.getHash_user());
                             break;
                         }
                         sleep(1000);
-                        if (inc>3)
+                        if (inc > 3)
                             break;
                     }
-                    } catch (JSONException | IOException | InterruptedException e) {e.printStackTrace();}
-                }).start();
+                } catch (JSONException | IOException | InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }).start();
+
+            Runnable timeOrder = () -> {
+                int wait = Integer.parseInt(String.valueOf(waitTime.getText()));
+                wait++;
+                int finalWait = wait;
+                runOnUiThread(() -> {
+                    waitTime.setText(String.valueOf(finalWait));
+                });
+            };
+
+            executor1.scheduleAtFixedRate(timeOrder, 1, 1, TimeUnit.MINUTES);
+
+            Runnable priceOrder = () -> {
+                try {
+                    AdminDataPojo data = new Gson().fromJson(HttpApi.getId(Env.URL_API_ADMIN + region + "_" + "0" + "_" + "0"), AdminDataPojo.class);
+                    int priceWaitOrder = Integer.parseInt(String.valueOf(priceWait.getText())) + Integer.parseInt(data.getWait());
+                    int finpr = Integer.parseInt(String.valueOf(price.getText())) + priceWaitOrder;
+                    String arg = "hash=" + hash + "&price=" + finpr;
+                    HttpApi.put(Env.URL_API_ALL_CARS, arg);
+                    final int finalPrice = priceWaitOrder;
+                    runOnUiThread(() -> {
+                        priceWait.setText(String.valueOf(finalPrice));
+                        price.setText(String.valueOf(finpr));
+                    });
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            };
+
+            executor2.scheduleAtFixedRate(priceOrder, 5, 5, TimeUnit.MINUTES);
 
             land.setVisibility(View.VISIBLE);
         });
@@ -212,11 +291,12 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
 
     @Override
     protected void onStop() {
-        if(mWebSocketClient.getConnection().isOpen()) {
+        if (mWebSocketClient.getConnection().isOpen()) {
             mWebSocketClient.close();
         }
         mapView.onStop();
         MapKitFactory.getInstance().onStop();
+        executor2.shutdown();
         super.onStop();
     }
 
@@ -224,6 +304,7 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
     protected void onDestroy() {
         if (mWebSocketClient.getConnection().isOpen())
             mWebSocketClient.close();
+        executor2.shutdown();
         super.onDestroy();
     }
 
@@ -241,22 +322,24 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
         URI uri;
         try {
             DBClass db = new DBClass();
-            uri = new URI("ws"+"://"+"45.86.47.12:28720");
+            uri = new URI("ws" + "://" + "45.86.47.12:28720");
         } catch (URISyntaxException e) {
-            Log.d("----uri------",e.getMessage());
+            Log.d("----uri------", e.getMessage());
             return;
         }
         mWebSocketClient = new WebSocketClient(uri, new Draft_17()) {
             private int count = 0;
+
             @Override
             public void onOpen(ServerHandshake serverHandshake) {
                 Log.d("Websocket", "Opened");
-                mWebSocketClient.send("{\"newUser\" : \""+ DBClass.getHash(getBaseContext()) +"\"}");
+                mWebSocketClient.send("{\"newUser\" : \"" + DBClass.getHash(getBaseContext()) + "\"}");
             }
+
             @Override
             public void onMessage(String s) {
                 Log.d("stringS", s);
-                if(s.equals("pong")){
+                if (s.equals("pong")) {
                     isPong = true;
                 } else {
                     RootGeolocationRoom geo = new Gson().fromJson(s, RootGeolocationRoom.class);
@@ -279,10 +362,12 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
                     }
                 }
             }
+
             @Override
             public void onClose(int i, String s, boolean b) {
                 Log.d("Websocket", "Closed " + s);
             }
+
             @Override
             public void onError(Exception e) {
                 Log.d("Websocket", "Error " + e.getMessage());
@@ -295,9 +380,9 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
         URI uri;
         DBClass db = new DBClass();
         try {
-            uri = new URI("ws"+"://"+"45.86.47.12:27888");
+            uri = new URI("ws" + "://" + "45.86.47.12:27888");
         } catch (URISyntaxException e) {
-            Log.d("----uri------",e.getMessage());
+            Log.d("----uri------", e.getMessage());
             return;
         }
         mWebSocketClientNotifications = new WebSocketClient(uri, new Draft_17()) {
@@ -306,16 +391,19 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
                 Log.d("Websocket", "Opened");
                 mWebSocketClientNotifications.send("{\"newUser\" : \"" + db.getHash(getBaseContext()) + "\"}");
             }
+
             @Override
             public void onMessage(String s) {
                 Log.d("stringS", s);
-                if(s.equals("pong"))
+                if (s.equals("pong"))
                     isPongNot = true;
             }
+
             @Override
             public void onClose(int i, String s, boolean b) {
                 Log.d("Websocket", "Closed " + s);
             }
+
             @Override
             public void onError(Exception e) {
                 Log.d("Websocket", "Error " + e.getMessage());
@@ -335,8 +423,8 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
     public void onObjectAdded(@NonNull UserLocationView userLocationView) {
 
         userLocationLayer.setAnchor(
-                new PointF((float)(mapView.getWidth() * 0.5), (float)(mapView.getHeight() * 0.5)),
-                new PointF((float)(mapView.getWidth() * 0.5), (float)(mapView.getHeight() * 0.83)));
+                new PointF((float) (mapView.getWidth() * 0.5), (float) (mapView.getHeight() * 0.5)),
+                new PointF((float) (mapView.getWidth() * 0.5), (float) (mapView.getHeight() * 0.83)));
 
         CompositeIcon pinIcon = userLocationView.getPin().useCompositeIcon();
 
@@ -353,7 +441,8 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
 
         new Thread(() -> {
             try {
-                r = new Gson().fromJson(HttpApi.getId(URL_API_ORDERS_TREE+"/"+hash), RootOrderOne.class);
+                DBClass = new DBClass();
+                r = new Gson().fromJson(HttpApi.getId(URL_API_ORDERS_TREE + "/" + DBClass.getHash(this)), RootOrderOne.class);
                 JSONObject jsonGeometry = new JSONObject();
                 runOnUiThread(() -> {
                     try {
@@ -361,7 +450,7 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
                         jsonGeometry.put("Latitude", userLocationView.getArrow().getGeometry().getLatitude());
                         jsonGeometry.put("user", r.getHash_user());
                         //new Thread(()->{tcpSocket.send(jsonGeometry);}).start();
-                        if(mWebSocketClient.getConnection().isOpen())
+                        if (mWebSocketClient.getConnection().isOpen())
                             mWebSocketClient.send(jsonGeometry.toString());
                     } catch (JSONException e) {
                         e.printStackTrace();
@@ -382,7 +471,8 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
     public void onObjectUpdated(@NonNull UserLocationView userLocationView, @NonNull ObjectEvent objectEvent) {
         new Thread(() -> {
             try {
-                r = new Gson().fromJson(HttpApi.getId(URL_API_ORDERS_TREE+"/"+hash), RootOrderOne.class);
+                DBClass= new DBClass();
+                r = new Gson().fromJson(HttpApi.getId(URL_API_ORDERS_TREE + "/" + DBClass.getHash(this)), RootOrderOne.class);
                 JSONObject jsonGeometry = new JSONObject();
                 runOnUiThread(() -> {
                     try {
@@ -390,7 +480,7 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
                         jsonGeometry.put("Latitude", userLocationView.getArrow().getGeometry().getLatitude());
                         jsonGeometry.put("user", r.getHash_user());
                         //new Thread(()->{tcpSocket.send(jsonGeometry);}).start();
-                        if(mWebSocketClient.getConnection().isOpen())
+                        if (mWebSocketClient.getConnection().isOpen())
                             mWebSocketClient.send(jsonGeometry.toString());
                     } catch (JSONException e) {
                         e.printStackTrace();
@@ -408,7 +498,7 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
         double smallRouteDistance = 0;
         Polyline smallRoute = new Polyline();
         for (DrivingRoute route : list) {
-            if(smallRouteDistance == 0) {
+            if (smallRouteDistance == 0) {
                 smallRouteDistance = route.getMetadata().getWeight().getDistance().getValue();
                 smallRoute = route.getGeometry();
                 DistanceRoute = route.getMetadata().getWeight().getDistance().getText();
@@ -423,26 +513,29 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
             }
         }
         mapObjects.addPolyline(smallRoute);
-        new Thread(()-> HttpApi.post(URL_API_TIME, "hash=" + hash + "&time=" + TimeRoute)).start();
+        new Thread(() -> {
+            DBClass = new DBClass();
+            HttpApi.post(URL_API_TIME, "hash=" + DBClass.getHash(this) + "&time=" + TimeRoute);
+        }).start();
         timeRoute();
     }
 
-    private void timeRoute()  {
-        new Thread(()-> {
-            while(true) {
-                runOnUiThread(()-> time.setText(TimeRoute));
+    private void timeRoute() {
+        new Thread(() -> {
+            while (true) {
+                runOnUiThread(() -> time.setText(TimeRoute));
                 try {
                     Thread.sleep(60000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
                 String[] tm = TimeRoute.split("\\D+");
-                if(Integer.parseInt(String.join("", tm)) == 0)
+                if (Integer.parseInt(String.join("", tm)) == 0)
                     break;
                 else {
                     int tmi = Integer.parseInt(String.join("", tm));
                     tmi--;
-                    TimeRoute = String.valueOf(tmi)+" мин";
+                    TimeRoute = String.valueOf(tmi) + " мин";
                 }
             }
         }).start();
@@ -467,8 +560,9 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
         MyLocationListener myLocationListener = new MyLocationListener();
 
         new Thread(() -> {
-            try{
-                RootOrderOne rootOrderOne = new Gson().fromJson(HttpApi.getId(URL_API_ORDERS_TREE+"/"+hash), RootOrderOne.class);
+            try {
+                DBClass = new DBClass();
+                RootOrderOne rootOrderOne = new Gson().fromJson(HttpApi.getId(URL_API_ORDERS_TREE + "/" + DBClass.getHash(this)), RootOrderOne.class);
                 ArrayList<String> data = new ArrayList<>(Arrays.asList(rootOrderOne.getStart().split(",")));
                 ArrayList<String> dataEnd = new ArrayList<>(Arrays.asList(rootOrderOne.getFinish().split(",")));
                 ROUTE_POINT_LOCATION = new Point(Double.parseDouble(data.get(1)), Double.parseDouble(data.get(0)));
@@ -493,7 +587,7 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
                             ImageProvider.fromResource(GoActivityDriver.this, R.drawable.finish)).setDraggable(true);
                     drivingSession = drivingRouter.requestRoutes(requestPoints, drivingOptions, vehicleOptions, GoActivityDriver.this);
                 });
-            } catch (Exception e){
+            } catch (Exception e) {
                 Log.d("Ex parse", e.getMessage());
             }
         }).start();
@@ -508,7 +602,7 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
         DBClass db = new DBClass();
         String url_order = URL_API + "/" + db.getHash(this);
         Runnable geoListener = () -> {
-            if(!flagNew) {
+            if (!flagNew) {
                 try {
                     RootOrderOne rootOrderOne = new Gson().fromJson(HttpApi.getId(url_order), RootOrderOne.class);
                     if (rootOrderOne.getActive().equals("0") || rootOrderOne.getActive().equals("4")) {
@@ -522,21 +616,22 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
         };
 
 
-        executor.scheduleAtFixedRate(geoListener, 0, 5, TimeUnit.SECONDS);
+        executor.scheduleAtFixedRate(geoListener, 5, 5, TimeUnit.SECONDS);
     }
+
     private void pingPong(String hash) {
-        new Thread(()->{
-            while(true){
+        new Thread(() -> {
+            while (true) {
                 try {
                     Thread.sleep(2000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                if(mWebSocketClient != null) {
+                if (mWebSocketClient != null) {
                     if (mWebSocketClient.getConnection().isOpen())
                         mWebSocketClient.send("{\"ping\" : \"" + hash + "\"}");
                 }
-                if(mWebSocketClientNotifications != null) {
+                if (mWebSocketClientNotifications != null) {
                     if (mWebSocketClientNotifications.getConnection().isOpen())
                         mWebSocketClientNotifications.send("{\"ping\" : \"" + hash + "\"}");
                 }
@@ -544,13 +639,13 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
                 isPongNot = false;
                 try {
                     Thread.sleep(2000);
-                    if(!isPong) {
-                        if(mWebSocketClient.getConnection().isOpen())
+                    if (!isPong) {
+                        if (mWebSocketClient.getConnection().isOpen())
                             mWebSocketClient.close();
                         connectToSocket();
                     }
-                    if(!isPongNot) {
-                        if(mWebSocketClientNotifications.getConnection().isOpen())
+                    if (!isPongNot) {
+                        if (mWebSocketClientNotifications.getConnection().isOpen())
                             mWebSocketClientNotifications.close();
                         connectToSocketNotifications();
                     }
@@ -561,13 +656,13 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
         }).start();
     }
 
-    public void telephone(RootOrderOne rootOrderOne){
+    public void telephone(RootOrderOne rootOrderOne) {
         ImageButton tel = findViewById(R.id.tel);
-        new Thread(()->{
+        new Thread(() -> {
             try {
-                RootUserOne root = new Gson().fromJson(HttpApi.getId("http://45.86.47.12/api/user/"+ rootOrderOne.getHash_driver() +"/1"), RootUserOne.class);
-                runOnUiThread(()->{
-                    tel.setOnClickListener(view->{
+                RootUserOne root = new Gson().fromJson(HttpApi.getId("http://45.86.47.12/api/user/" + rootOrderOne.getHash_driver() + "/1"), RootUserOne.class);
+                runOnUiThread(() -> {
+                    tel.setOnClickListener(view -> {
                         Intent intent = new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + root.getPhone()));
                         startActivity(intent);
                     });
@@ -578,4 +673,11 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
         }).start();
 
     }
+
+    @Override
+    protected void onPause() {
+        executor2.shutdown();
+        super.onPause();
+    }
+
 }

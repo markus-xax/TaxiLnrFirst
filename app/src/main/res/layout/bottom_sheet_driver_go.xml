@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/bottom_sheet_go_driver"
     android:layout_width="match_parent"
-    android:layout_height="260dp"
+    android:layout_height="410dp"
     android:background="@android:color/white"
     android:orientation="vertical"
     app:behavior_hideable="false"
@@ -50,9 +50,9 @@
 
 
     <FrameLayout
+        android:id="@+id/bp"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/bp">
+        android:layout_height="wrap_content">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -151,19 +151,98 @@
             android:layout_marginTop="100dp"
             android:backgroundTint="@color/blue"
             android:text="@string/down"
-            android:visibility="gone"/>
+            android:visibility="gone" />
 
         <ImageButton
             android:id="@+id/tel"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            app:srcCompat="@drawable/tel"
             android:layout_marginStart="30dp"
             android:layout_marginTop="100dp"
-            android:contentDescription="@string/todo" />
+            android:contentDescription="@string/todo"
+            app:srcCompat="@drawable/tel" />
 
 
     </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginStart="10dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/wait_user"
+            android:textSize="16sp"
+            android:textColor="@color/black"
+            android:fontFamily="@font/roboto_mono_bold"
+            android:layout_marginEnd="10dp"/>
+
+        <TextView
+            android:id="@+id/wait_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0"
+            android:textSize="16sp"
+            android:textColor="@color/black"
+            android:fontFamily="@font/roboto_mono_bold"
+            android:layout_marginEnd="10dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="мин"
+            android:textSize="16sp"
+            android:textColor="@color/black"
+            android:fontFamily="@font/roboto_mono_bold"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginStart="10dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/price_wait"
+            android:textSize="16sp"
+            android:textColor="@color/black"
+            android:fontFamily="@font/roboto_mono_bold"
+            android:layout_marginEnd="10dp"/>
+
+        <TextView
+            android:id="@+id/price_wait"
+            android:layout_marginEnd="10dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0"
+            android:textSize="16sp"
+            android:textColor="@color/black"
+            android:fontFamily="@font/roboto_mono_bold"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="руб"
+            android:textSize="16sp"
+            android:textColor="@color/black"
+            android:fontFamily="@font/roboto_mono_bold"/>
+
+    </LinearLayout>
+
+
+    <TextView
+        android:id="@+id/cancel"
+        android:layout_marginStart="10dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Отменить"
+        android:textSize="16sp"
+        android:textColor="@color/red_erro"
+        android:fontFamily="@font/roboto_mono" />
 
 
 </LinearLayout>

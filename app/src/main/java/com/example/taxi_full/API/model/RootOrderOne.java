@@ -1,12 +1,10 @@
 package com.example.taxi_full.API.model;
 
-import androidx.annotation.NonNull;
-
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 public class RootOrderOne {
-    private String id, hash_user, hash_driver, start, finish, active,nameUser, nameDriver, error, start_string, finish_string, price, distance, type_pay;
+    private String id, hash_user, hash_driver, start, finish, active,nameUser, nameDriver, error, start_string, finish_string, price, distance, type_pay, region;
     @SerializedName("class")
     @Expose
     private String _class;
@@ -129,5 +127,13 @@ public class RootOrderOne {
 
     public void set_class(String _class) {
         this._class = _class;
+    }
+
+    public String getRegion() {
+        return region;
+    }
+
+    public void setRegion(String region) {
+        this.region = region;
     }
 }

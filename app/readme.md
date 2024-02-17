@@ -1,0 +1,1 @@
+1) Test method in interface Maps(HomeActivity) submit request (driving session delete)

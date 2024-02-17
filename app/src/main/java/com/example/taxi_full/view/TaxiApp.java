@@ -5,7 +5,7 @@ import android.app.Application;
 import com.yandex.mapkit.MapKitFactory;
 
 public class TaxiApp extends Application {
-    private static final String MAPKIT_API_KEY = "770c81aa-812b-47b8-a909-2ab1f69a500f";
+    private static final String MAPKIT_API_KEY = "3b4ac084-8b03-4fef-b944-152dbc8c7f39";
     @Override
     public void onCreate() {
         super.onCreate();

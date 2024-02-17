@@ -138,4 +138,6 @@
     <string name="risk_payment">Если платеж не поступил моментально, пожалуйста, подождите 24 часа. Если в течении этоговремени ничего не произошло, обратитесь на почту техподдержки: mail@mail.ru</string>
     <string name="auth">Войти</string>
     <string name="off">Отменить</string>
+    <string name="wait_user">Время ожидания:</string>
+    <string name="price_wait">Стоимость ожидания:</string>
 </resources>
