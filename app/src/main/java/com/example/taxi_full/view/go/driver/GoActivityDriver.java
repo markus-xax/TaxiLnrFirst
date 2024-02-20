@@ -221,7 +221,7 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
             new Thread(() -> {
                 if (HttpApi.put(url, arg) == HttpURLConnection.HTTP_OK) {
                     flagNew = true;
-                    startActivity(new Intent("com.example.taxi_full.view.RequestDriver"));
+                    startActivity(new Intent("com.example.taxi_full.RequestDriver"));
                 }
             }).start();
         });
@@ -370,7 +370,7 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
 
             @Override
             public void onError(Exception e) {
-                Log.d("Websocket", "Error " + e.getMessage());
+                Log.d("Websocket", "Error2" + e.getMessage());
             }
         };
         mWebSocketClient.connect();
@@ -406,7 +406,7 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
 
             @Override
             public void onError(Exception e) {
-                Log.d("Websocket", "Error " + e.getMessage());
+                Log.d("Websocket", "Error1" + e.getMessage());
             }
         };
         mWebSocketClientNotifications.connect();
@@ -607,7 +607,7 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
                     RootOrderOne rootOrderOne = new Gson().fromJson(HttpApi.getId(url_order), RootOrderOne.class);
                     if (rootOrderOne.getActive().equals("0") || rootOrderOne.getActive().equals("4")) {
                         executor.shutdown();
-                        startActivity(new Intent("com.example.taxi_full.view.RequestDriver"));
+                        startActivity(new Intent("com.example.taxi_full.RequestDriver"));
                     }
                 } catch (IOException e) {
                     e.printStackTrace();

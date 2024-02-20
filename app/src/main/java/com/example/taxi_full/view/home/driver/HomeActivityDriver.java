@@ -401,7 +401,7 @@ public class HomeActivityDriver extends AppCompatActivity implements UserLocatio
             DBClass db = new DBClass();
             try{
                 if(!HttpApi.getId(Env.URL_DEBT + "/" + db.getHash(this)).equals("[]")) {
-                    startActivity(new Intent("com.example.taxi_full.view.debt.Debt"));
+                    startActivity(new Intent("com.example.taxi_full.Debt"));
                 }
             }catch (IOException e){
                 e.printStackTrace();

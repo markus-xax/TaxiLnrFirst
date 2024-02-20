@@ -1573,7 +1573,4 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
             }
         }).start());
     }
-
-
 }
-
