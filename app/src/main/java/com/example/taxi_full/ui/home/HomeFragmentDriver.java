@@ -544,15 +544,17 @@ public class HomeFragmentDriver extends Fragment {
         String[][] newData = new String[lengthDataCity()][6];
         if(data != null) {
             int c = 0;
+            int count = 0;
             for (int i = 0; i < data.length; i++) {
                 String[] city = data[i][3].split(",");
                 if (city[0].equals(myGeo())) {
-                    newData[c][0] = orders.get(c).getNameUser();
-                    newData[c][1] = orders.get(c).getDistance();
-                    newData[c][2] = orders.get(c).getPrice();
-                    newData[c][3] = orders.get(c).getStart_string();
-                    newData[c][4] = orders.get(c).getFinish_string();
-                    newData[c][5] = orders.get(c).getType_pay();
+                    newData[count][0] = orders.get(c).getNameUser();
+                    newData[count][1] = orders.get(c).getDistance();
+                    newData[count][2] = orders.get(c).getPrice();
+                    newData[count][3] = orders.get(c).getStart_string();
+                    newData[count][4] = orders.get(c).getFinish_string();
+                    newData[count][5] = orders.get(c).getType_pay();
+                    count++;
                 }
                 c++;
             }
@@ -577,10 +579,12 @@ public class HomeFragmentDriver extends Fragment {
         int[] newData = new int[lengthDataCity()];
         if(data != null) {
             int c = 0;
+            int count = 0;
             for (int i = 0; i < data.length; i++) {
                 String[] city = data[i][3].split(",");
                 if (city[0].equals(myGeo())) {
-                    newData[c] = R.drawable.profile_man;
+                    newData[count] = R.drawable.profile_man;
+                    count++;
                 }
                 c++;
             }

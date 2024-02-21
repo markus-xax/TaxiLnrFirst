@@ -182,14 +182,18 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
 
         super.onCreate(savedInstanceState);
 
+        long time = System.currentTimeMillis();
+
         setContentView(R.layout.fragment_home);
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        MyLocationListener.SetUpLocationListener(this);
+
         mapView = findViewById(R.id.mapview);
         mapView.getMap().setRotateGesturesEnabled(true);
-        mapView.getMap().move(new CameraPosition(new Point(0, 0), 14, 0, 0));
+        mapView.getMap().move(new CameraPosition(new Point(MyLocationListener.imHere.getLatitude(), MyLocationListener.imHere.getLongitude()), 14, 0, 0));
 
         //Стили!!!
         StyleCard.setMapStyle(mapView);

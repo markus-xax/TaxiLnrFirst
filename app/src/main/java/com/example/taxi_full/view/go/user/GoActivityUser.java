@@ -27,6 +27,7 @@ import androidx.core.content.ContextCompat;
 
 import com.example.taxi_full.API.DBClass;
 import com.example.taxi_full.API.HttpApi;
+import com.example.taxi_full.API.MyLocationListener;
 import com.example.taxi_full.API.env.StyleCard;
 import com.example.taxi_full.API.model.RootCars;
 import com.example.taxi_full.API.model.RootGeolocationRoom;
@@ -129,13 +130,15 @@ public class GoActivityUser extends AppCompatActivity implements UserLocationObj
         super.onCreate(savedInstanceState);
         setContentView(R.layout.go_activity_user);
 
+        MyLocationListener.SetUpLocationListener(this);
+
         connectToSocket();
         connectToSocketNotifications();
         cancel();
 
         mapView = findViewById(R.id.mapviewUserGo);
         mapView.getMap().setRotateGesturesEnabled(true);
-        mapView.getMap().move(new CameraPosition(new Point(0, 0), 14, 0, 0));
+        mapView.getMap().move(new CameraPosition(new Point(MyLocationListener.imHere.getLatitude(), MyLocationListener.imHere.getLongitude()), 14, 0, 0));
         MapKit mapKit = MapKitFactory.getInstance();
         userLocationLayer = mapKit.createUserLocationLayer(mapView.getMapWindow());
         userLocationLayer.setVisible(true);

@@ -24,6 +24,7 @@ import androidx.navigation.ui.NavigationUI;
 
 import com.example.taxi_full.API.DBClass;
 import com.example.taxi_full.API.HttpApi;
+import com.example.taxi_full.API.MyLocationListener;
 import com.example.taxi_full.API.env.Env;
 import com.example.taxi_full.API.env.StyleCard;
 import com.example.taxi_full.API.model.RootAllOrders;
@@ -96,10 +97,11 @@ public class HomeActivityDriver extends AppCompatActivity implements UserLocatio
         binding = ActivityHomeDriverBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        MyLocationListener.SetUpLocationListener(this);
 
         mapView = findViewById(R.id.mapviewHomeDriver);
         mapView.getMap().setRotateGesturesEnabled(false);
-        mapView.getMap().move(new CameraPosition(new Point(0, 0), 14, 0, 0));
+        mapView.getMap().move(new CameraPosition(new Point(MyLocationListener.imHere.getLatitude(), MyLocationListener.imHere.getLongitude()), 14, 0, 0));
 
         requestLocationPermission();
 

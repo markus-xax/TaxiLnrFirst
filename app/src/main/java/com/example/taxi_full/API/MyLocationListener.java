@@ -12,9 +12,9 @@ import androidx.core.app.ActivityCompat;
 
 public class MyLocationListener implements LocationListener {
 
-    public static Location imHere; // здесь будет всегда доступна самая последняя информация о местоположении пользователя.
+    public static Location imHere;
 
-    public static void SetUpLocationListener(Context context) // это нужно запустить в самом начале работы программы
+    public static void SetUpLocationListener(Context context)
     {
         LocationManager locationManager = (LocationManager)
                 context.getSystemService(Context.LOCATION_SERVICE);
@@ -28,7 +28,7 @@ public class MyLocationListener implements LocationListener {
                 LocationManager.NETWORK_PROVIDER,
                 500,
                 5,
-                locationListener); // здесь можно указать другие более подходящие вам параметры
+                locationListener);
 
         imHere = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
     }

@@ -117,12 +117,14 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
         super.onCreate(savedInstanceState);
         setContentView(R.layout.go_activity_driver);
 
+        MyLocationListener.SetUpLocationListener(this);
+
         connectToSocket();
         connectToSocketNotifications();
 
         mapView = findViewById(R.id.mapview);
         mapView.getMap().setRotateGesturesEnabled(false);
-        mapView.getMap().move(new CameraPosition(new Point(0, 0), 19, 0, 0));
+        mapView.getMap().move(new CameraPosition(new Point(MyLocationListener.imHere.getLatitude(), MyLocationListener.imHere.getLongitude()), 19, 0, 0));
         MapKit mapKit = MapKitFactory.getInstance();
         userLocationLayer = mapKit.createUserLocationLayer(mapView.getMapWindow());
         userLocationLayer.setVisible(true);
