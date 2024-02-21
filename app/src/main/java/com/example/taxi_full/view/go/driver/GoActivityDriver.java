@@ -3,6 +3,7 @@ package com.example.taxi_full.view.go.driver;
 import static com.example.taxi_full.API.env.Env.URL_API_USERS;
 import static java.lang.Thread.sleep;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PointF;
@@ -63,7 +64,6 @@ import org.java_websocket.drafts.Draft_17;
 import org.java_websocket.handshake.ServerHandshake;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -592,6 +592,7 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
             }
         }).start();
     }
+
 
     @Override
     public void onBackPressed() {

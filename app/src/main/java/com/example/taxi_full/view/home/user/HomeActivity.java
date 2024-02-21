@@ -1510,6 +1510,8 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                         DBClass db = new DBClass();
                         String hash = db.getHash(HomeActivity.this);
                         String url = Env.URL_API_USERS + "/" + hash;
+                        if(Class == 0)
+                            Class = 1;
                         String arg = "active=2" + "&class=" + Class;
                         new Thread(() -> {
                             if (HttpApi.put(url, arg) == HttpURLConnection.HTTP_OK) {
@@ -1552,6 +1554,8 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
             DBClass db = new DBClass();
             String hash = db.getHash(HomeActivity.this);
             String url = Env.URL_API_USERS + "/" + hash;
+            if(Class == 0)
+                Class = 1;
             String arg = "active=1" + "&class=" + Class;
             if (HttpApi.put(url, arg) == HttpURLConnection.HTTP_OK) {
                 connectToSocketButton();
