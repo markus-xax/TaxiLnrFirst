@@ -55,8 +55,8 @@ public class CoreAPI implements Core {
 
                                 // сокеты решение
                                 activity.connectToSocketButton();
-                                mWebSocketClientButton.send("buttonOn");
-                                mWebSocketClientButton.close();
+                                HomeActivity.mWebSocketClientButton.send("buttonOn");
+                                HomeActivity.mWebSocketClientButton.close();
 
                                 activity.runOnUiThread(() -> {
                                     if (point1 != null) {
@@ -105,8 +105,8 @@ public class CoreAPI implements Core {
             if (HttpApi.put(url, arg) == HttpURLConnection.HTTP_OK) {
 
                 activity.connectToSocketButton();
-                mWebSocketClientButton.send("buttonOn");
-                mWebSocketClientButton.close();
+                HomeActivity.mWebSocketClientButton.send("buttonOn");
+                HomeActivity.mWebSocketClientButton.close();
 
                 activity.runOnUiThread(() -> {
                     if (point1 != null && point2 != null) {

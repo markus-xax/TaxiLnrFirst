@@ -10,6 +10,7 @@ public class DBClass {
     public SQLiteDatabase db;
     private int DC;
     private String hash;
+    private int active;
 
     public String getHash(Context context){
         DBHelper dbHelper = new DBHelper(context);
@@ -61,5 +62,28 @@ public class DBClass {
         db.close();
 
         return DC+"";
+    }
+
+    public int getActiveSMS(Context context) {
+        DBHelper dbHelper = new DBHelper(context);
+
+        db = dbHelper.getWritableDatabase();
+
+        userCursor = db.query(DBHelper.TABLE_USER_VALUES, null, null, null, null, null, null);
+        if (userCursor.moveToFirst()) {
+            int ActiveIndex = userCursor.getColumnIndex(DBHelper.KEY_ACTIVE);
+            int ActiveSMSIndex = userCursor.getColumnIndex(DBHelper.KEY_ACTIVE_SMS);
+            do {
+                if (userCursor.getInt(ActiveIndex) == 1) {
+                    active = userCursor.getInt(ActiveSMSIndex);
+                }
+            } while (userCursor.moveToNext());
+        } else
+            return -1;
+
+        userCursor.close();
+        db.close();
+
+        return active;
     }
 }

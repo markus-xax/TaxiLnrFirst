@@ -118,7 +118,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
     private DBClass DBClass = new DBClass();
     private EditText start, finish, homeEdit, workEdit;
     private String finsh_string, start_string, distance, price, region = null;
-    private WebSocketClient mWebSocketClient, mWebSocketClientButton;
+    public static WebSocketClient mWebSocketClient, mWebSocketClientButton;
     private final HashMap<String, HashMap<String, Object>> users = new HashMap<>();
     private HashMap<String, Integer> colorsCars = new HashMap<>();
     private DrivingSession drivingSession;

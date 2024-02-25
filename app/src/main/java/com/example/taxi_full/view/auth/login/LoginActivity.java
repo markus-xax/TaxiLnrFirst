@@ -18,11 +18,11 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.taxi_full.API.DBClass;
+import com.example.taxi_full.API.DBHelper;
 import com.example.taxi_full.API.HttpApi;
 import com.example.taxi_full.API.Regx;
 import com.example.taxi_full.API.model.RootUserOne;
 import com.example.taxi_full.R;
-import com.example.taxi_full.API.DBHelper;
 import com.google.gson.Gson;
 
 import java.io.IOException;
@@ -52,7 +52,6 @@ public class LoginActivity extends AppCompatActivity {
         EditText editText = (EditText)findViewById(R.id.loginPhone);
         Button button = (Button)findViewById(R.id.button);
         dbHelper = new DBHelper(this);
-
 
         DBClass dbClass = new DBClass();
         if(!dbClass.getHash(this).equals("0 rows"))

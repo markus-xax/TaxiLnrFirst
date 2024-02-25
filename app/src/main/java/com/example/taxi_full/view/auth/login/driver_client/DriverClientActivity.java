@@ -31,6 +31,7 @@ public class DriverClientActivity extends AppCompatActivity {
     private static final int REQUEST_CODE_PERMISSION_INTERNET = 1;
     private static final int PERMISSIONS_REQUEST_FINE_LOCATION = 1;
 
+
     @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -38,22 +39,25 @@ public class DriverClientActivity extends AppCompatActivity {
         setContentView(R.layout.driver_byer);
         requestLocationPermission();
 
+
         dbHelper = new DBHelper(this);
 
         SQLiteDatabase database = dbHelper.getWritableDatabase();
         Cursor cursor = database.query(DBHelper.TABLE_USER_VALUES, null, null, null, null, null, null);
 
-        if (!cursor.moveToFirst()){
+        if (!cursor.moveToFirst()) {
             ContentValues contentValues = new ContentValues();
 
             contentValues.put(DBHelper.KEY_DC, 0);
             contentValues.put(DBHelper.KEY_TOKEN, HashGenerator.hash());
             contentValues.put(DBHelper.KEY_ACTIVE, 0);
+            contentValues.put(DBHelper.KEY_ACTIVE_SMS, 0);
             database.insert(DBHelper.TABLE_USER_VALUES, null, contentValues);
 
             contentValues.put(DBHelper.KEY_DC, 1);
             contentValues.put(DBHelper.KEY_TOKEN, HashGenerator.hash());
             contentValues.put(DBHelper.KEY_ACTIVE, 0);
+            contentValues.put(DBHelper.KEY_ACTIVE_SMS, 0);
             database.insert(DBHelper.TABLE_USER_VALUES, null, contentValues);
 
             cursor.close();
@@ -62,11 +66,10 @@ public class DriverClientActivity extends AppCompatActivity {
 
         GPSStatus();
 
-        if(GPS_STATUS == true)
-        {
-            runOnUiThread(()-> Toast.makeText(this, "Геолокация включена", Toast.LENGTH_LONG));
+        if (GPS_STATUS == true) {
+            runOnUiThread(() -> Toast.makeText(this, "Геолокация включена", Toast.LENGTH_LONG));
         } else {
-            runOnUiThread(()-> Toast.makeText(this, "Геолокация включена", Toast.LENGTH_LONG));
+            runOnUiThread(() -> Toast.makeText(this, "Геолокация включена", Toast.LENGTH_LONG));
             Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
             startActivity(intent);
         }
@@ -74,7 +77,7 @@ public class DriverClientActivity extends AppCompatActivity {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
-    public void driver(View view){
+    public void driver(View view) {
         SQLiteDatabase database = dbHelper.getWritableDatabase();
 
         Cursor cursor = database.query(DBHelper.TABLE_USER_VALUES, null, null, null, null, null, null);
@@ -83,14 +86,15 @@ public class DriverClientActivity extends AppCompatActivity {
             int dcIndex = cursor.getColumnIndex(DBHelper.KEY_DC);
             do {
                 int dc = cursor.getInt(dcIndex);
-                if(dc == 1){
+                if (dc == 1) {
                     ContentValues contentValues = new ContentValues();
 
                     contentValues.put(DBHelper.KEY_ACTIVE, 1);
-                    database.update(DBHelper.TABLE_USER_VALUES, contentValues,DBHelper.KEY_DC+" = ?", new String[]{"1"});
+                    database.update(DBHelper.TABLE_USER_VALUES, contentValues, DBHelper.KEY_DC + " = ?", new String[]{"1"});
 
                     contentValues.put(DBHelper.KEY_ACTIVE, 0);
-                    database.update(DBHelper.TABLE_USER_VALUES, contentValues,DBHelper.KEY_DC+" = ?", new String[]{"0"});
+                    contentValues.put(DBHelper.KEY_ACTIVE_SMS, 0);
+                    database.update(DBHelper.TABLE_USER_VALUES, contentValues, DBHelper.KEY_DC + " = ?", new String[]{"0"});
 
                     startActivity(new Intent("com.example.taxi_full.Login"));
                 }
@@ -102,7 +106,7 @@ public class DriverClientActivity extends AppCompatActivity {
 
     }
 
-    public void client(View view){
+    public void client(View view) {
         SQLiteDatabase database = dbHelper.getWritableDatabase();
 
         Cursor cursor = database.query(DBHelper.TABLE_USER_VALUES, null, null, null, null, null, null);
@@ -111,14 +115,15 @@ public class DriverClientActivity extends AppCompatActivity {
             int dcIndex = cursor.getColumnIndex(DBHelper.KEY_DC);
             do {
                 int dc = cursor.getInt(dcIndex);
-                if(dc == 0){
+                if (dc == 0) {
                     ContentValues contentValues = new ContentValues();
 
                     contentValues.put(DBHelper.KEY_ACTIVE, 1);
-                    database.update(DBHelper.TABLE_USER_VALUES, contentValues,DBHelper.KEY_DC+" = ?", new String[]{"0"});
+                    database.update(DBHelper.TABLE_USER_VALUES, contentValues, DBHelper.KEY_DC + " = ?", new String[]{"0"});
 
                     contentValues.put(DBHelper.KEY_ACTIVE, 0);
-                    database.update(DBHelper.TABLE_USER_VALUES, contentValues,DBHelper.KEY_DC+" = ?", new String[]{"1"});
+                    contentValues.put(DBHelper.KEY_ACTIVE_SMS, 0);
+                    database.update(DBHelper.TABLE_USER_VALUES, contentValues, DBHelper.KEY_DC + " = ?", new String[]{"1"});
 
                     startActivity(new Intent("com.example.taxi_full.Login"));
                 }
@@ -133,6 +138,7 @@ public class DriverClientActivity extends AppCompatActivity {
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         GPS_STATUS = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
     }
+
     private void requestLocationPermission() {
         if (ContextCompat.checkSelfPermission(this, "android.permission.ACCESS_FINE_LOCATION") != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{"android.permission.ACCESS_FINE_LOCATION"}, PERMISSIONS_REQUEST_FINE_LOCATION);

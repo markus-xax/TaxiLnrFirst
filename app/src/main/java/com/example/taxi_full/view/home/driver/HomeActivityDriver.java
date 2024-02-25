@@ -1,5 +1,6 @@
 package com.example.taxi_full.view.home.driver;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
@@ -208,6 +209,7 @@ public class HomeActivityDriver extends AppCompatActivity implements UserLocatio
         //super.onBackPressed();
     }
 
+    @SuppressLint("SetTextI18n")
     private void echoUserOrderText(){
         new Thread(()-> {
             String url = Env.URL_API_ORDER + "/";
@@ -239,18 +241,19 @@ public class HomeActivityDriver extends AppCompatActivity implements UserLocatio
                 runOnUiThread(()->{
                     TextView name_surname_nav_header = findViewById(R.id.nameSurnameNHD);
                     TextView rate = findViewById(R.id.RateMenuDriver);
-                    TextView orders_count = findViewById(R.id.count_orders_header_driver);
-                    TextView incoming_day = findViewById(R.id.income_day_header_driver);
+//                    TextView orders_count = findViewById(R.id.count_orders_header_driver);
+//                    TextView incoming_day = findViewById(R.id.income_day_header_driver);
                     if(rootUserOne.getError().equals("") && rootUserOne.getNameSurname() != null) {
                         if(name_surname_nav_header != null)
                             name_surname_nav_header.setText(rootUserOne.getNameSurname());
-                        if(rootUserOne.getRate() == null || rootUserOne.getRate().equals(""))
-                            rate.setText("5");
-                        else
-                            rate.setText(rootUserOne.getRate()+" ");
-
-                        orders_count.setText(String.valueOf(finalCount_orders));
-                        incoming_day.setText(String.valueOf(incomingDriver));
+                        if(rate != null) {
+                            if (rootUserOne.getRate() == null || rootUserOne.getRate().equals(""))
+                                rate.setText("5");
+                            else
+                                rate.setText(rootUserOne.getRate() + "+");
+                        }
+//                        orders_count.setText(String.valueOf(finalCount_orders));
+//                        incoming_day.setText(String.valueOf(incomingDriver));
                     }
                 });
             } catch (IOException e) {
