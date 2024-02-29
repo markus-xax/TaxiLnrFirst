@@ -61,8 +61,8 @@ public class HomeFragmentDriver extends Fragment {
     public ListView list;
     public String[][] data;
     public int[] dataImg;
-    public final String URL_API = "http://45.86.47.12/api/orders";
-    public final String URL_API_CAR = "http://45.86.47.12/api/cars/";
+    public final String URL_API = Env.URL_API_ORDERS;
+    public final String URL_API_CAR = Env.URL_CARS;
     public DBClass DBClass = new DBClass();
     private WebSocketClient mWebSocketClient;
     private WebSocketClient mWebSocketClientGeo;

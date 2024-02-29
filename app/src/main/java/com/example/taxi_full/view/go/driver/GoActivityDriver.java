@@ -3,7 +3,6 @@ package com.example.taxi_full.view.go.driver;
 import static com.example.taxi_full.API.env.Env.URL_API_USERS;
 import static java.lang.Thread.sleep;
 
-import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PointF;
@@ -96,7 +95,7 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
     private Point ROUTE_POINT_LOCATION = new Point();
     private Point user = new Point();
     private PlacemarkMapObject placemarkMapObject;
-    private final String URL_API = "http://45.86.47.12/api/orders";
+    private final String URL_API = Env.URL_API_ORDERS;
     private final String URL_API_TIME = "http://45.86.47.12/api/time";
     private String DistanceRoute, TimeRoute;
     private TextView time;

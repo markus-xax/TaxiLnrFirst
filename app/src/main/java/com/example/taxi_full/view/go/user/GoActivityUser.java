@@ -28,6 +28,7 @@ import androidx.core.content.ContextCompat;
 import com.example.taxi_full.API.DBClass;
 import com.example.taxi_full.API.HttpApi;
 import com.example.taxi_full.API.MyLocationListener;
+import com.example.taxi_full.API.env.Env;
 import com.example.taxi_full.API.env.StyleCard;
 import com.example.taxi_full.API.model.RootCars;
 import com.example.taxi_full.API.model.RootGeolocationRoom;
@@ -110,7 +111,7 @@ public class GoActivityUser extends AppCompatActivity implements UserLocationObj
     private static final int PERMISSIONS_REQUEST_FINE_LOCATION = 1;
     private Point driver = new Point();
     private PlacemarkMapObject placemarkMapObject;
-    private final String URL_API = "http://45.86.47.12/api/orders";
+    private final String URL_API = Env.URL_API_ORDERS;
     private String DistanceRoute, TimeRoute, TimeRouteGSON;
     private String TimeRouteStart = "0 мин";
     private TextView time, time2, price;
