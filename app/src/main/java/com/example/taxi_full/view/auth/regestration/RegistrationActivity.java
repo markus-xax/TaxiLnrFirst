@@ -77,12 +77,16 @@ public class RegistrationActivity extends AppCompatActivity {
                     if (HttpApi.post(URL_API, arr) == HttpURLConnection.HTTP_OK) {
                         startActivity(new Intent("com.example.taxi_full.Login"));
                     } else {
-                        Toast.makeText(RegistrationActivity.this, "Пользоватлель с таким номером телефона уже существует!", Toast.LENGTH_LONG).show();
+                        runOnUiThread(() -> {
+                            Toast.makeText(RegistrationActivity.this, "Пользоватлель с таким номером телефона уже существует!", Toast.LENGTH_LONG).show();
+                        });
                     }
                 }
             }).start();
         } else {
-            Toast.makeText(this, "Неправильно введены номер телефона или email!", Toast.LENGTH_LONG).show();
+            runOnUiThread(() -> {
+                Toast.makeText(this, "Неправильно введены номер телефона или email!", Toast.LENGTH_LONG).show();
+            });
         }
     }
 

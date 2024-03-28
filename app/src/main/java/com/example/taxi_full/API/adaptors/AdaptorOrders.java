@@ -77,10 +77,10 @@ public class AdaptorOrders extends BaseAdapter {
             price.setText(data[i][2] + "руб");
             String startSTR = data[i][3].replace("Россия","");
             startSTR = startSTR.replace("Украина", "");
-            addressStart.setText(startSTR);
+            addressStart.setText("   "+startSTR);
             String finishSTR = data[i][4].replace("Россия","");
             finishSTR = finishSTR.replace("Украина", "");
-            addressFinish.setText(finishSTR);
+            addressFinish.setText("   "+finishSTR);
             if (data[i][5].equals("1"))
                 type_pay.setText("Наличный расчет");
             else

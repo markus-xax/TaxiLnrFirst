@@ -2,6 +2,7 @@ package com.example.taxi_full.view.pay.cashless;
 
 import static java.lang.Thread.sleep;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.webkit.WebView;
 
@@ -26,6 +27,7 @@ public class PayOffNal extends AppCompatActivity {
         setContentView(R.layout.pay_off_nal);
         DBClass dbClass = new DBClass();
 
+
         new Thread(() -> {
             String hash = dbClass.getHash(this);
             String urlO = URL_API +"/"+hash;
@@ -42,6 +44,8 @@ public class PayOffNal extends AppCompatActivity {
         }
 
     }
+
+    @SuppressLint("SetJavaScriptEnabled")
     private void pay() throws InterruptedException {
         DBClass dbClass = new DBClass();
         String hash = dbClass.getHash(this);

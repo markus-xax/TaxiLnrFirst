@@ -62,6 +62,7 @@ public class ProfileDriverFragment extends Fragment {
                             rate.setText("5");
                         else
                             rate.setText(rootUserOne.getRate());
+                    new Thread(() -> {
                         try {
                             if (!HttpApi.getId(URL_CARS + "/" + hash).equals("0")) {
                                 if (rootCars.getError() == null) {
@@ -75,7 +76,8 @@ public class ProfileDriverFragment extends Fragment {
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
-                    });
+                    }).start();
+                });
             } catch (IOException e) {
                 e.printStackTrace();
             }
