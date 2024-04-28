@@ -2,6 +2,7 @@ package com.example.taxi_full.view;
 
 import android.app.Application;
 
+import com.example.taxi_full.API.MyLocationListener;
 import com.yandex.mapkit.MapKitFactory;
 
 public class TaxiApp extends Application {
@@ -11,5 +12,6 @@ public class TaxiApp extends Application {
         super.onCreate();
         MapKitFactory.setApiKey(MAPKIT_API_KEY);
         MapKitFactory.initialize(this);
+        MyLocationListener.SetUpLocationListener(this);
     }
 }

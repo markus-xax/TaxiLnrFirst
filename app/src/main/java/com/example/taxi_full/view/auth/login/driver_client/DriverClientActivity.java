@@ -66,7 +66,7 @@ public class DriverClientActivity extends AppCompatActivity {
 
         GPSStatus();
 
-        if (GPS_STATUS == true) {
+        if (GPS_STATUS) {
             runOnUiThread(() -> Toast.makeText(this, "Геолокация включена", Toast.LENGTH_LONG));
         } else {
             runOnUiThread(() -> Toast.makeText(this, "Геолокация включена", Toast.LENGTH_LONG));

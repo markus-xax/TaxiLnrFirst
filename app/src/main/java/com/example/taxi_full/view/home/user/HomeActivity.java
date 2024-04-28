@@ -14,6 +14,7 @@ import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.UnderlineSpan;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.View;
@@ -136,7 +137,8 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
     private TextView eco, middle, business;
     private Button typeNal, typeOffNal;
     ImageView home, work, dollar_eco, dollar_middle, dollar_business;
-    private boolean isPong;
+    private boolean isPong = false;
+    private boolean socketConn = false;
     private String pr = "";
     private int Class, clasOrder = 1;
     private double smallRouteDistance;
@@ -220,7 +222,13 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
 
+        ImageView menu_op = findViewById(R.id.op_menu);
+        menu_op.setOnClickListener(v -> {
+            drawer.openDrawer(Gravity.START);
+        });
+
         connectToSocket();
+        pingPong("ping");
 
         assign();
 
@@ -299,14 +307,6 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
     }
 
     @Override
-    protected void onStop() {
-        mapView.onStop();
-        MapKitFactory.getInstance().onStop();
-
-        super.onStop();
-    }
-
-    @Override
     protected void onStart() {
         super.onStart();
         MapKitFactory.getInstance().onStart();
@@ -317,7 +317,6 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         } catch (Exception e) {
             e.printStackTrace();
         }
-        pingPong("ping");
     }
 
     @Override
@@ -710,30 +709,51 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
     };
 
     private void pingPong(String hash) {
-        new Thread(() -> {
-            while (true) {
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                if (mWebSocketClient != null) {
-                    if (mWebSocketClient.getConnection().isOpen())
-                        mWebSocketClient.send("{\"ping\" : \"" + hash + "\"}");
-                }
-                isPong = false;
-                try {
-                    Thread.sleep(2000);
-                    if (!isPong) {
-                        if (mWebSocketClient.getConnection().isOpen())
-                            mWebSocketClient.close();
-                        connectToSocket();
-                    }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+        Runnable pingServer = () -> {
+            isPong = false;
+            if (mWebSocketClient != null) {
+                if (mWebSocketClient.getConnection().isOpen())
+                    mWebSocketClient.send("{\"ping\" : \"" + hash + "\"}");
             }
-        }).start();
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            Log.d("понг", isPong+"");
+            if (!isPong) {
+                if (mWebSocketClient.getConnection().isOpen())
+                    mWebSocketClient.close();
+                connectToSocket();
+            }
+
+        };
+        executor3.scheduleAtFixedRate(pingServer, 5, 5, TimeUnit.SECONDS);
+//        new Thread(() -> {
+//            while (true) {
+//                isPong = false;
+//                try {
+//                    Thread.sleep(5000);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//                if (mWebSocketClient != null) {
+//                    if (mWebSocketClient.getConnection().isOpen())
+//                        mWebSocketClient.send("{\"ping\" : \"" + hash + "\"}");
+//                }
+//                try {
+//                    Thread.sleep(5000);
+//                    Log.d("понг", isPong+"");
+//                    if (!isPong) {
+//                        if (mWebSocketClient.getConnection().isOpen())
+//                            mWebSocketClient.close();
+//                        connectToSocket();
+//                    }
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        }).start();
     }
 
     private void connectToSocket() {
@@ -985,6 +1005,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
     @Override
     public void onBackPressed() {
         //super.onBackPressed();
+        this.finish();
 
     }
 
@@ -1580,5 +1601,29 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
                 });
             }
         }).start());
+    }
+
+    @Override
+    protected void onPause() {
+        if(mWebSocketClient != null) {
+            if (mWebSocketClient.getConnection().isOpen()) {
+                mWebSocketClient.close();
+            }
+        }
+        executor3.shutdown();
+        super.onPause();
+    }
+
+    @Override
+    protected void onStop() {
+        mapView.onStop();
+        MapKitFactory.getInstance().onStop();
+        if(mWebSocketClient != null) {
+            if (mWebSocketClient.getConnection().isOpen()) {
+                mWebSocketClient.close();
+            }
+        }
+        executor3.shutdown();
+        super.onStop();
     }
 }

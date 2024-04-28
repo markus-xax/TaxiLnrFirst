@@ -1,22 +1,28 @@
 package com.example.taxi_full.view.home.driver;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.PointF;
 import android.graphics.Typeface;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
@@ -98,13 +104,12 @@ public class HomeActivityDriver extends AppCompatActivity implements UserLocatio
         binding = ActivityHomeDriverBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        requestLocationPermission();
         MyLocationListener.SetUpLocationListener(this);
 
         mapView = findViewById(R.id.mapviewHomeDriver);
         mapView.getMap().setRotateGesturesEnabled(false);
         mapView.getMap().move(new CameraPosition(new Point(MyLocationListener.imHere.getLatitude(), MyLocationListener.imHere.getLongitude()), 14, 0, 0));
-
-        requestLocationPermission();
 
         MapKit mapKit = MapKitFactory.getInstance();
         mapKit.resetLocationManagerToDefault();
@@ -129,6 +134,12 @@ public class HomeActivityDriver extends AppCompatActivity implements UserLocatio
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main_driver);
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
+
+        ImageView menu_op = findViewById(R.id.op_menu);
+        menu_op.setOnClickListener(v -> {
+            drawer.openDrawer(GravityCompat.START);
+        });
+
         connectToSocket();
         echoUserOrderText();
         try {
@@ -207,6 +218,7 @@ public class HomeActivityDriver extends AppCompatActivity implements UserLocatio
     @Override
     public void onBackPressed() {
         //super.onBackPressed();
+        this.finish();
     }
 
     @SuppressLint("SetTextI18n")

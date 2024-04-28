@@ -669,6 +669,7 @@ public class GoActivityUser extends AppCompatActivity implements UserLocationObj
     @Override
     public void onBackPressed() {
         //super.onBackPressed();
+        this.finish();
     }
 
     private void RedirectToHome() {

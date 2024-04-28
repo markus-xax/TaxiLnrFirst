@@ -598,6 +598,7 @@ public class GoActivityDriver extends AppCompatActivity implements UserLocationO
     @Override
     public void onBackPressed() {
         //super.onBackPressed();
+        this.finish();
     }
 
     private void RedirectToHome() {

@@ -54,6 +54,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class HomeFragmentDriver extends Fragment {
 
@@ -78,6 +79,7 @@ public class HomeFragmentDriver extends Fragment {
     private String[][] newData;
     private int[] newImg;
     private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+    private final ScheduledExecutorService executor3 = Executors.newScheduledThreadPool(1);
     private boolean isPong;
     private boolean isPongGeo;
 
@@ -242,6 +244,7 @@ public class HomeFragmentDriver extends Fragment {
         if(mWebSocketClient.getConnection().isOpen()){
             mWebSocketClient.close();
         }
+        executor3.shutdown();
         super.onStop();
     }
 
@@ -503,6 +506,7 @@ public class HomeFragmentDriver extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
+        executor3.shutdown();
         mSensorManager.unregisterListener(gyroscopeSensorListener);
     }
     private void arrayInp(int i, List<RootAllOrders> orders){
@@ -593,40 +597,73 @@ public class HomeFragmentDriver extends Fragment {
     }
 
     private void pingPong(String hash) {
-        new Thread(()->{
-            while(true){
+        Runnable pingServer = () -> {
+            isPong = false;
+            isPongGeo = false;
+            if(mWebSocketClient != null) {
+                if (mWebSocketClient.getConnection().isOpen())
+                    mWebSocketClient.send("{\"ping\" : \"" + hash + "\"}");
+            }
+            if(mWebSocketClientGeo != null) {
+                if (mWebSocketClientGeo.getConnection().isOpen())
+                    mWebSocketClientGeo.send("{\"ping\" : \"" + hash + "\"}");
+            }
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            if(!isPong) {
+                if(mWebSocketClient.getConnection().isOpen())
+                    mWebSocketClient.close();
+                connectToSocket();
+            }
+            if(!isPongGeo){
+                if(mWebSocketClientGeo.getConnection().isOpen())
+                    mWebSocketClientGeo.close();
                 try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                if(mWebSocketClient != null) {
-                    if (mWebSocketClient.getConnection().isOpen())
-                        mWebSocketClient.send("{\"ping\" : \"" + hash + "\"}");
-                }
-                if(mWebSocketClientGeo != null) {
-                    if (mWebSocketClientGeo.getConnection().isOpen())
-                        mWebSocketClientGeo.send("{\"ping\" : \"" + hash + "\"}");
-                }
-                isPong = false;
-                isPongGeo = false;
-                try {
-                    Thread.sleep(2000);
-                    if(!isPong) {
-                        if(mWebSocketClient.getConnection().isOpen())
-                            mWebSocketClient.close();
-                        connectToSocket();
-                    }
-                    if(!isPongGeo){
-                        if(mWebSocketClientGeo.getConnection().isOpen())
-                            mWebSocketClientGeo.close();
-                        connectToSocketGeolocation();
-                    }
+                    connectToSocketGeolocation();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
-        }).start();
+
+        };
+        executor3.scheduleAtFixedRate(pingServer, 5, 5, TimeUnit.SECONDS);
+//        new Thread(()->{
+//            while(true){
+//                try {
+//                    Thread.sleep(2000);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//                if(mWebSocketClient != null) {
+//                    if (mWebSocketClient.getConnection().isOpen())
+//                        mWebSocketClient.send("{\"ping\" : \"" + hash + "\"}");
+//                }
+//                if(mWebSocketClientGeo != null) {
+//                    if (mWebSocketClientGeo.getConnection().isOpen())
+//                        mWebSocketClientGeo.send("{\"ping\" : \"" + hash + "\"}");
+//                }
+//                isPong = false;
+//                isPongGeo = false;
+//                try {
+//                    Thread.sleep(2000);
+//                    if(!isPong) {
+//                        if(mWebSocketClient.getConnection().isOpen())
+//                            mWebSocketClient.close();
+//                        connectToSocket();
+//                    }
+//                    if(!isPongGeo){
+//                        if(mWebSocketClientGeo.getConnection().isOpen())
+//                            mWebSocketClientGeo.close();
+//                        connectToSocketGeolocation();
+//                    }
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        }).start();
     }
 
 }

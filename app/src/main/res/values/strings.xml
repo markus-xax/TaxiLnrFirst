@@ -140,4 +140,5 @@
     <string name="off">Отменить</string>
     <string name="wait_user">Время ожидания:</string>
     <string name="price_wait">Стоимость ожидания:</string>
+    <string name="msg_switch_network">Для корректной работы приложения требуется включить местоположение</string>
 </resources>
