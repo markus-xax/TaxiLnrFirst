@@ -10,6 +10,7 @@ import android.graphics.Color;
 import android.graphics.PointF;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.UnderlineSpan;
@@ -30,6 +31,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
@@ -224,7 +226,7 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
 
         ImageView menu_op = findViewById(R.id.op_menu);
         menu_op.setOnClickListener(v -> {
-            drawer.openDrawer(Gravity.START);
+            drawer.openDrawer(GravityCompat.START);
         });
 
         connectToSocket();
@@ -1324,15 +1326,24 @@ public class HomeActivity extends AppCompatActivity implements UserLocationObjec
         if (id == DIALOG) {
             dialogOrder = true;
             AlertDialog.Builder adb = new AlertDialog.Builder(this);
+
             adb.setTitle("Проверьте правильность заказа");
-            adb.setMessage("Если все верно, нажмите \"Ок\" и снова на кнопку \"Заказать\"");
+            adb.setMessage(getString(R.string.start_bold) + start.getText()+"\n"+
+                    getString(R.string.finish_bold) + finish.getText()+"\n"+
+                    "Если все верно, нажмите \"Ок\" и снова на кнопку \"Заказать\"" + "\n" +
+                    "Если есть ошибки, нажмите кнопку \"Отмена\" и исправьте заказ");
             adb.setPositiveButton("OK", null);
+            adb.setNegativeButton("Отмена", null);
             dialog = adb.create();
             dialog.setOnShowListener(dialogInterface -> {
                 Button positiveButton = ((AlertDialog) dialog).getButton(DialogInterface.BUTTON_POSITIVE);
                 positiveButton.setTextColor(getApplicationContext().getResources().getColor(R.color.dark_gray));
                 positiveButton.setTypeface(Typeface.DEFAULT_BOLD);
                 positiveButton.invalidate();
+                Button negativeButton = ((AlertDialog) dialog).getButton(DialogInterface.BUTTON_NEGATIVE);
+                negativeButton.setTextColor(getApplicationContext().getResources().getColor(R.color.dark_gray));
+                negativeButton.setTypeface(Typeface.DEFAULT_BOLD);
+                negativeButton.invalidate();
             });
 
             // обработчик отмены

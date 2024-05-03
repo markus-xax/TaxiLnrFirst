@@ -19,7 +19,7 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="500dp"
+        android:layout_height="700dp"
         android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -31,7 +31,7 @@
         <ImageView
             android:id="@+id/imageView28"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="127dp"
             app:srcCompat="@drawable/car" />
 
         <TextView
@@ -43,8 +43,8 @@
         <Spinner
             android:id="@+id/type"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-        </Spinner>
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"></Spinner>
 
         <TextView
             android:layout_width="wrap_content"
@@ -56,13 +56,29 @@
         <Spinner
             android:id="@+id/color"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"></Spinner>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/classCar"
+            android:layout_marginStart="10dp"/>
+
+        <Spinner
+            android:id="@+id/classCar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:minHeight="48dp">
         </Spinner>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/number"
+            android:layout_marginTop="10dp"
             android:layout_marginStart="10dp"/>
 
         <EditText
@@ -81,36 +97,58 @@
             android:layout_height="wrap_content"
             android:text="@string/car_brand"
             android:layout_marginStart="10dp"
-            android:layout_marginTop="10dp"/>
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"/>
 
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="96dp"
             android:orientation="horizontal"
             android:layout_marginStart="10dp"
             android:layout_marginEnd="10dp">
 
-            <Spinner
-                android:id="@+id/mark"
+            <LinearLayout
                 android:layout_width="0dp"
-                android:layout_weight="10"
-                android:layout_height="match_parent">
-            </Spinner>
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:layout_weight="10">
+
+                <EditText
+                    android:id="@+id/findMark"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:hint="@string/findMark"
+                    android:backgroundTint="@color/black"/>
+
+                <Spinner
+                    android:id="@+id/mark"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+                </Spinner>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:layout_weight="10">
+
+                <EditText
+                    android:id="@+id/findModel"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:hint="@string/findModel"
+                    android:backgroundTint="@color/black"/>
 
             <Spinner
                 android:id="@+id/model"
-                android:layout_weight="10"
-                android:layout_width="0dp"
-                android:layout_height="match_parent">
+                android:layout_height="match_parent"
+                android:layout_width="match_parent">
             </Spinner>
 
-            <Spinner
-                android:id="@+id/classCar"
-                android:layout_weight="10"
-                android:layout_width="0dp"
-                android:layout_height="match_parent">
-            </Spinner>
+            </LinearLayout>
 
         </LinearLayout>
     </LinearLayout>
@@ -125,6 +163,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.89" />
+        app:layout_constraintVertical_bias="0.95" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

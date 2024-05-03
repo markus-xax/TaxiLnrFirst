@@ -2,6 +2,7 @@ package com.example.taxi_full.view.cars;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
@@ -15,6 +16,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.taxi_full.API.DBClass;
@@ -30,6 +32,7 @@ import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class AddCar extends AppCompatActivity {
 
@@ -156,6 +159,15 @@ public class AddCar extends AppCompatActivity {
             public void onNothingSelected(AdapterView<?> arg0) {
             }
         });
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    private List<String> findMarkWithPrefix(List<String> list, String prefix){
+        if(prefix != null) {
+            return list.stream()
+                    .filter(str -> str.contains(prefix))
+                    .collect(Collectors.toList());
+        } else return list;
     }
 
     private void spinnerModel(){

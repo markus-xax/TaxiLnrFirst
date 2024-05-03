@@ -118,6 +118,9 @@
     <string name="count_orders">Заказы</string>
     <string name="error_not_read_point">Невозможно поставить сюда точку</string>
     <string name="color">Цвет</string>
+    <string name="classCar">Класс автомобиля</string>
+    <string name="findMark">Поиск марки</string>
+    <string name="findModel">Поиск модели</string>
     <string name="home">Адрес дома</string>
     <string name="work">Адрес работы</string>
     <string name="incoming">Дневная прибыль</string>
@@ -141,4 +144,6 @@
     <string name="wait_user">Время ожидания:</string>
     <string name="price_wait">Стоимость ожидания:</string>
     <string name="msg_switch_network">Для корректной работы приложения требуется включить местоположение</string>
+    <string name="start_bold"><b>Старт: </b></string>
+    <string name="finish_bold"><b>Финиш: </b></string>
 </resources>

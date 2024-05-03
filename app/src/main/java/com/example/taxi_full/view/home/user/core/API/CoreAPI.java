@@ -187,7 +187,9 @@ public class CoreAPI implements Core {
                     if (rootUserOne.getError() != null && rootUserOne.getError().equals("")) {
                         TextView name_surname_menu = activity.findViewById(R.id.menuNameSurname);
                         TextView rate_menu = activity.findViewById(R.id.menuRate);
-                        name_surname_menu.setText(rootUserOne.getNameSurname() + "");
+                        if (rootUserOne.getNameSurname() == null || rootUserOne.getNameSurname().equals(""))
+                            name_surname_menu.setText("Пользователь");
+                        else name_surname_menu.setText(rootUserOne.getNameSurname());
                         if (rootUserOne.getRate() == null || rootUserOne.getRate().equals(""))
                             rate_menu.setText("5");
                         else rate_menu.setText(rootUserOne.getRate());
