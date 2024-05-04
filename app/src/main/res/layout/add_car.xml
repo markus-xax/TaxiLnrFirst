@@ -8,7 +8,7 @@
         android:id="@+id/textView41"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="50dp"
+        android:layout_marginTop="30dp"
         android:fontFamily="@font/roboto_mono_bold"
         android:text="@string/addCar"
         android:textColor="@color/black"
@@ -18,9 +18,11 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <LinearLayout
+        android:id="@+id/linearLayout6"
         android:layout_width="match_parent"
         android:layout_height="700dp"
         android:orientation="vertical"
+
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -37,8 +39,8 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/type_car"
-            android:layout_marginStart="10dp"/>
+            android:layout_marginStart="10dp"
+            android:text="@string/type_car" />
 
         <Spinner
             android:id="@+id/type"
@@ -49,9 +51,9 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
             android:layout_marginTop="10dp"
-            android:text="@string/color"
-            android:layout_marginStart="10dp"/>
+            android:text="@string/color" />
 
         <Spinner
             android:id="@+id/color"
@@ -62,24 +64,23 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
             android:layout_marginTop="10dp"
-            android:text="@string/classCar"
-            android:layout_marginStart="10dp"/>
+            android:text="@string/classCar" />
 
         <Spinner
             android:id="@+id/classCar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:minHeight="48dp">
-        </Spinner>
+            android:minHeight="48dp"></Spinner>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/number"
+            android:layout_marginStart="10dp"
             android:layout_marginTop="10dp"
-            android:layout_marginStart="10dp"/>
+            android:text="@string/number" />
 
         <EditText
             android:id="@+id/number"
@@ -95,74 +96,74 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/car_brand"
             android:layout_marginStart="10dp"
             android:layout_marginTop="10dp"
-            android:layout_marginBottom="10dp"/>
+            android:layout_marginBottom="10dp"
+            android:text="@string/car_brand" />
 
-
-        <LinearLayout
+        <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="96dp"
-            android:orientation="horizontal"
-            android:layout_marginStart="10dp"
-            android:layout_marginEnd="10dp">
+            android:layout_height="wrap_content">
 
             <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:orientation="vertical"
-                android:layout_weight="10">
+                android:layout_width="match_parent"
+                android:layout_height="96dp"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:orientation="horizontal">
 
-                <EditText
-                    android:id="@+id/findMark"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:hint="@string/findMark"
-                    android:backgroundTint="@color/black"/>
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="10"
+                    android:orientation="vertical">
 
-                <Spinner
-                    android:id="@+id/mark"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent">
-                </Spinner>
+                    <EditText
+                        android:id="@+id/findMark"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:backgroundTint="@color/black"
+                        android:hint="@string/findMark" />
+
+                    <Spinner
+                        android:id="@+id/mark"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"></Spinner>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="10"
+                    android:orientation="vertical">
+
+                    <EditText
+                        android:id="@+id/findModel"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:backgroundTint="@color/black"
+                        android:hint="@string/findModel" />
+
+                    <Spinner
+                        android:id="@+id/model"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"></Spinner>
+
+                </LinearLayout>
 
             </LinearLayout>
+        </ScrollView>
 
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:orientation="vertical"
-                android:layout_weight="10">
+        <Button
+            android:id="@+id/save"
+            android:layout_width="250dp"
+            android:layout_height="60dp"
+            android:layout_marginTop="80dp"
+            android:backgroundTint="@color/blue"
+            android:layout_gravity="center_horizontal"
+            android:text="@string/save" />
 
-                <EditText
-                    android:id="@+id/findModel"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:hint="@string/findModel"
-                    android:backgroundTint="@color/black"/>
-
-            <Spinner
-                android:id="@+id/model"
-                android:layout_height="match_parent"
-                android:layout_width="match_parent">
-            </Spinner>
-
-            </LinearLayout>
-
-        </LinearLayout>
     </LinearLayout>
-
-    <Button
-        android:id="@+id/save"
-        android:layout_width="250dp"
-        android:layout_height="60dp"
-        android:backgroundTint="@color/blue"
-        android:text="@string/save"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.95" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -37,7 +39,7 @@ import java.util.stream.Collectors;
 public class AddCar extends AppCompatActivity {
 
     String[] data = {"Седан", "Минивэн", "Джип", "Кроссовер", "Хэтчбек"};
-    String[] dataColor = {"Белый","Черный", "Синий", "Зеленый", "Красный", "Желтый"};
+    String[] dataColor = {"Белый", "Черный", "Синий", "Зеленый", "Красный", "Желтый"};
     String[] dataClass = {"Эконом", "Стандарт", "Бизнес"};
 
     private final String URL_API = "http://45.86.47.12/api/cars";
@@ -61,17 +63,36 @@ public class AddCar extends AppCompatActivity {
 
         Spinner mark = findViewById(R.id.mark);
         TextView number = findViewById(R.id.number);
+        EditText findMark = findViewById(R.id.findMark);
 
         dbClass = new DBClass();
         hash = dbClass.getHash(this);
 
         spinnerCar();
         spinnerColor();
-        spinnerMark();
+        spinnerMark(null);
+
+        findMark.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                spinnerMark(editable.toString());
+            }
+        });
+
         spinnerClass();
 
         save.setOnClickListener(view -> {
-            if(markCar != null & modelCar != null) {
+            if (markCar != null & modelCar != null) {
                 String arr = "hash=" + hash + "&model=" + markCar + " " + modelCar + "&number=" + number.getText() + "&type=" + typeCar + "&color=" + colorCar + "&class=" + classCar;
                 new Thread(() -> {
                     if (HttpApi.post(URL_API, arr) == HttpURLConnection.HTTP_OK) {
@@ -85,13 +106,13 @@ public class AddCar extends AppCompatActivity {
                 }).start();
 
                 startActivity(new Intent("com.example.taxi_full.HomeDriver"));
-            }else
+            } else
                 Toast.makeText(this, "Выберите марку и модель автомобиля!", Toast.LENGTH_LONG).show();
         });
 
     }
 
-    private void spinnerCar(){
+    private void spinnerCar() {
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, data);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
@@ -108,13 +129,14 @@ public class AddCar extends AppCompatActivity {
                                        int position, long id) {
                 typeCar = spinner.getSelectedItem().toString();
             }
+
             @Override
             public void onNothingSelected(AdapterView<?> arg0) {
             }
         });
     }
 
-    private void spinnerMark() {
+    private void spinnerMark(String prefix) {
         try {
             Runnable getCars = () -> {
                 Type listType = new TypeToken<List<RootAllMarkCars>>() {
@@ -132,8 +154,15 @@ public class AddCar extends AppCompatActivity {
             e.printStackTrace();
         }
         List<String> carsList = new ArrayList<>();
-        for (int i = 0; i < markCars.size(); i++) {
-            carsList.add(markCars.get(i).getMark());
+        if (prefix == null) {
+            for (int i = 0; i < markCars.size(); i++) {
+                carsList.add(markCars.get(i).getMark());
+            }
+        } else {
+            for (int i = 0; i < markCars.size(); i++) {
+                if (markCars.get(i).getMark().toLowerCase().contains(prefix.toLowerCase()))
+                    carsList.add(markCars.get(i).getMark());
+            }
         }
         String[] cars = carsList.toArray(new String[0]);
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, cars);
@@ -152,7 +181,24 @@ public class AddCar extends AppCompatActivity {
                                        int position, long id) {
                 markCar = null;
                 markCar = spinner.getSelectedItem().toString();
-                spinnerModel();
+                EditText findModel = findViewById(R.id.findModel);
+                spinnerModel(null);
+                findModel.addTextChangedListener(new TextWatcher() {
+                    @Override
+                    public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+                    }
+
+                    @Override
+                    public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+                    }
+
+                    @Override
+                    public void afterTextChanged(Editable editable) {
+                        spinnerModel(editable.toString());
+                    }
+                });
             }
 
             @Override
@@ -162,15 +208,15 @@ public class AddCar extends AppCompatActivity {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
-    private List<String> findMarkWithPrefix(List<String> list, String prefix){
-        if(prefix != null) {
+    private List<String> findMarkWithPrefix(List<String> list, String prefix) {
+        if (prefix != null) {
             return list.stream()
                     .filter(str -> str.contains(prefix))
                     .collect(Collectors.toList());
         } else return list;
     }
 
-    private void spinnerModel(){
+    private void spinnerModel(String prefix) {
         try {
             Runnable getCars = () -> {
                 Type listType = new TypeToken<List<RootAllModelCars>>() {
@@ -188,8 +234,15 @@ public class AddCar extends AppCompatActivity {
             e.printStackTrace();
         }
         List<String> modelsList = new ArrayList<>();
-        for (int i = 0; i < modelCars.size(); i++) {
-            modelsList.add(modelCars.get(i).getModel());
+        if(prefix == null) {
+            for (int i = 0; i < modelCars.size(); i++) {
+                modelsList.add(modelCars.get(i).getModel());
+            }
+        } else {
+            for (int i = 0; i < modelCars.size(); i++) {
+                if (modelCars.get(i).getModel().toLowerCase().contains(prefix.toLowerCase()))
+                    modelsList.add(modelCars.get(i).getModel());
+            }
         }
         String[] models = modelsList.toArray(new String[0]);
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, models);
@@ -208,13 +261,14 @@ public class AddCar extends AppCompatActivity {
                                        int position, long id) {
                 modelCar = spinner.getSelectedItem().toString();
             }
+
             @Override
             public void onNothingSelected(AdapterView<?> arg0) {
             }
         });
     }
 
-    private void spinnerColor(){
+    private void spinnerColor() {
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, dataColor);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
@@ -229,26 +283,27 @@ public class AddCar extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view,
                                        int position, long id) {
-                if(spinner.getSelectedItem().toString().equals("Белый"))
+                if (spinner.getSelectedItem().toString().equals("Белый"))
                     colorCar = 1;
-                if(spinner.getSelectedItem().toString().equals("Черный"))
+                if (spinner.getSelectedItem().toString().equals("Черный"))
                     colorCar = 2;
-                if(spinner.getSelectedItem().toString().equals("Синий"))
+                if (spinner.getSelectedItem().toString().equals("Синий"))
                     colorCar = 3;
-                if(spinner.getSelectedItem().toString().equals("Зеленый"))
+                if (spinner.getSelectedItem().toString().equals("Зеленый"))
                     colorCar = 4;
-                if(spinner.getSelectedItem().toString().equals("Красный"))
+                if (spinner.getSelectedItem().toString().equals("Красный"))
                     colorCar = 5;
-                if(spinner.getSelectedItem().toString().equals("Желтый"))
+                if (spinner.getSelectedItem().toString().equals("Желтый"))
                     colorCar = 6;
             }
+
             @Override
             public void onNothingSelected(AdapterView<?> arg0) {
             }
         });
     }
 
-    private void spinnerClass(){
+    private void spinnerClass() {
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, dataClass);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
@@ -266,6 +321,7 @@ public class AddCar extends AppCompatActivity {
                 classCar = position;
                 classCar++;
             }
+
             @Override
             public void onNothingSelected(AdapterView<?> arg0) {
             }
@@ -284,10 +340,10 @@ public class AddCar extends AppCompatActivity {
             w.getLocationOnScreen(scrcoords);
             float x = event.getRawX() + w.getLeft() - scrcoords[0];
             float y = event.getRawY() + w.getTop() - scrcoords[1];
-            if (event.getAction() == MotionEvent.ACTION_UP && (x < w.getLeft() || x >= w.getRight() || y < w.getTop() || y > w.getBottom()) ) {
+            if (event.getAction() == MotionEvent.ACTION_UP && (x < w.getLeft() || x >= w.getRight() || y < w.getTop() || y > w.getBottom())) {
                 InputMethodManager imm = null;
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-                    imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                 }
                 imm.hideSoftInputFromWindow(getWindow().getCurrentFocus().getWindowToken(), 0);
             }
